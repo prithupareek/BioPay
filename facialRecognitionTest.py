@@ -30,6 +30,7 @@ for file in os.listdir(directory):
 
     results = face_recognition.compare_faces([my_face_encoding], unknownFaceEncoding)
 
+
     if results[0] == True:
         print("It is a picture of me!")
     else:
