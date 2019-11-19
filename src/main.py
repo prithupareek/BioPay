@@ -15,6 +15,8 @@ import string
 from functions import *
 from splashScreenMode import *
 from loginMode import *
+from customerPortalMode import *
+from merchantPortalMode import *
 
 class App(object):
     # __init__ and appsStarted get called once when app is called
@@ -30,6 +32,7 @@ class App(object):
         # self.data.cameraOn = True
         self.data.splashScreenMode = SplashScreenMode(data)
         self.data.loginMode = LoginMode(data)
+
         self.data.activeMode = self.data.splashScreenMode
 
     def keyPressed(self, event, data):
@@ -40,6 +43,9 @@ class App(object):
 
     def mousePressed(self, event, data):
         self.data.activeMode.mousePressed(event, data)
+
+    def mouseReleased(self, event, data):
+        self.data.activeMode.mouseReleased(event, data)
 
     def drawTextBox(self, canvas, data):
         self.data.activeMode.drawTextBox(canvas, data)
@@ -93,6 +99,7 @@ class App(object):
         # Basic bindings. Note that only timer events will redraw.
         data.root.bind("<Button-1>", lambda event: self.mousePressed(event, data))
         data.root.bind("<Key>", lambda event: self.keyPressed(event, data))
+        data.root.bind("<B1-ButtonRelease>", lambda event: self.mouseReleased(event, data))
 
         # Timer fired needs a wrapper. This is for periodic events.
         def timerFiredWrapper(data):

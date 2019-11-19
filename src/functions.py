@@ -24,13 +24,14 @@ class InputBox(object):
                     'slash':'/', 'question':'?'
                 }
 
-    def __init__(self, x0, y0, x1, name):
+    def __init__(self, x0, y0, x1, name, hidden=False):
         self.clicked = False
         self.outlineWidth = 1
         (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x1, y0+40)
         self.name = self.inputText = name
         # self.maxInputLen = math.floor((self.x1-self.x0)/12.5)
         self.maxInputLen = 16
+        self.hidden=hidden
 
     def mousePressed(self, event):
         if (self.x0 < event.x < self.x1 and
@@ -62,7 +63,11 @@ class InputBox(object):
     def draw(self, canvas):
         canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, 
                                 width=self.outlineWidth)
-        canvas.create_text(self.x0+5, self.y1, text=self.inputText,
+        if self.hidden:
+            displayText = '*'*len(self.inputText)
+        else:
+            displayText = self.inputText
+        canvas.create_text(self.x0+5, self.y1, text=displayText,
                            anchor='sw', font='Helvetica 32')
 
 # button class
@@ -78,6 +83,12 @@ class Button(object):
             self.y0 < event.y < self.y1):
             self.clicked = True
             self.outlineWidth = 3
+
+    def mouseReleased(self, event):
+        if (self.x0 < event.x < self.x1 and
+            self.y0 < event.y < self.y1):
+            self.clicked = False
+            self.outlineWidth = 1
 
     def draw(self, canvas):
         canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, fill='#2178cf', width=self.outlineWidth)
