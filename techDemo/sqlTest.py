@@ -1,12 +1,12 @@
 import pymysql
 import pymysql.cursors
 
-# Connect to the database
+# Connect to the datab
 connection = pymysql.connect(host='35.237.8.126',
                              user='root',
-                             password='prithupareek123',
+                             password='password',
                              db='biometric_payment_database',
-                             charset='utf8mb4',
+                             charset='utf8',
                              cursorclass=pymysql.cursors.DictCursor)
 
 userName = input("Enter your username: ")

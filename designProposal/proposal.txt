@@ -1,0 +1,63 @@
+Project Proposal
+
+- Project Description
+  Name: BioPay
+  Desc: BioPay is a biometrically (facial recognition) authenticated payment and transaction platform. The intention of this platform is to replace credit card/NFC/cash transactions with ones requiring just your face to complete the purchase. There are two sides to this app. The first is for merchants who will be able to input all of their products into the app, generate a cart for their customers, and actually complete the transaction using the biometric authentication of the customer. This would essensially replace a POS (Point of Sale) system found in most stores. The other side is for consumers. Using the app they will be able to see their transaction history, add/remove payment methods/ and enroll their face which will be used for the facial recognion authentication.
+
+
+- Competitive Analysis
+  There are a few startups in the past/currently that are trying to do something similar to this project. The first that I found after coming up with this idea was actually a startup based out of CMU, and later backed by Y-combinator (a major incubator/excelerator) that would use your fingerprint to complete your transaction in lieu of credit cards, etc. This company was called PayTango and actually had a pilot on campus in the Exchange and UG, replacing student IDs with their fingerpring system. Amazon is doig something similar, codenamed "Orville". They are using a hand geometry scanner to replace card transactions, claming that it can cut down a typical 3-4s transaction, to just 300 milliseconds. They are testing this out in their company vending machines right now, but they want to roll it out to all of their Whole Foods locations very soon.
+
+  My project is very similar to these so far as that it aims to replace card transactions with biometics in the interest of efficiency and convinience. Where the projects differ is that my app will replace the entire POS system, not just the credit card reader. Merchants will be able to add their database of products to the app, and all of the checkout processes (ex. cart creation) will take place directly on my program. Additionally I will add dynamic price modulation, based on suppy and demand or products as well as suggested products that will be pushed to the customer portal of the app.
+
+
+- Structural Plan
+  I plan to have one main project file, which will then import the various other features of the project, all contained in different files. Below is a tentative breakdown. I will use classes for the various scripts.
+  - main.py (Main project file)
+  	- login.py (login scirpt)
+  	- faceRecognition.py (face recognition script)
+  	- merchantPortal.py (merchant portal)
+  	- customerPortal.py (customer portal)
+  	- sqlConnect.py (communicate with database)
+  	  - getTransactionHistory()
+  	  - getInventory()
+  	  - getUserData()
+  	  - getFace()
+  	  - completeTransaction()
+  	  - setUserFaceImage()
+  	  - setUserPassword()
+  	  - setUserName()
+  	  - addProdcut()
+  	  - setProductPrice()
+  	- priceModultion.py
+  	- suggestProducts.py
+  I plan to add/remove classes/functions as needed, but they will all follow this structure. 
+
+
+- Algorithmic Plan
+  Suggested Products for Users Algorithm
+  This algorithm will suggest products for users to buy based on the items in their cart when they are at checkout. This algorithm will have multiple parts. The first will bascially check what the customer has in their cart and then for each item look through all the previous carts where that those items were present and generate a list of the top 5 most common occurences. If there are less than top 5 occurences, then it will search based on category (an attribute that each item will have). The app will first find the top 1 category in the persons cart, and then grab five random items from that category. If there is a tie, it will randomly select one category from the tiebreakers. Another part of the algorithm will be finding items based on a persons likes or dislikes. This will be a seperate list of items. To calculate this you look at a customers highest rated objects and lowest rated objects, and then compare them to other customers with similar likes and dislikes. The app will then suggest five objects that similar customers have purchased.
+
+
+- Timeline Plan
+  11/20: Login Completed
+  11/23: Customer Portal and sql to go w/ it Completed
+  11/24: Merchant Portal and sql to go w/ it Completed
+  11/26: Facial Recognition Completed
+  		 Suggested Products for Users Completed
+  11/30: Price optimization based on customer data Completed
+  12/01: User Budgeting Completed
+  12/03: Web scrapping for merchant products Completed
+  12/04: Final Product/Bug Testing 
+  12/05: Turn in Final Poduct
+
+
+- Version Control Plan
+  I will be using git and GitHub as a version control and cloud backup solution. This will allow me to have a safe backup of my project stored off of my computer, as well as let me go back to a previous version of my project (ex. MVP) in case I mess up part of my code and have made too many changes to easily go back.
+  (Image example of my version control setup in designProposal folder)
+
+
+- Module List
+  - OpenCV
+  - face_recognition
+  - Pymysql
