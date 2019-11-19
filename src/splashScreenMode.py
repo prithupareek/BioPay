@@ -11,6 +11,7 @@ class SplashScreenMode(Mode):
         self.data = data
         self.logo = Image.open('images/logo.png')
         self.logo = scaleImage(self.logo, 0.4, antialias=True)
+        self.tkLogo = ImageTk.PhotoImage(self.logo)
         self.counter = 0
         
     def timerFired(self, data):
@@ -19,7 +20,7 @@ class SplashScreenMode(Mode):
             self.data.activeMode = self.data.loginMode
 
     def redrawAll(self, canvas, data):
-        canvas.create_rectangle(0, 0, self.width, self.height, fill='#2178cf')
-        self.image = ImageTk.PhotoImage(self.logo)
-        canvas.create_image(self.width/2, self.height/2-self.logo.height/2, image=self.image)
+        canvas.create_rectangle(0, 0, self.width, self.height, fill=MAIN_COLOR)
+        
+        canvas.create_image(self.width/2, self.height/2-self.logo.height/2, image=self.tkLogo)
         canvas.create_text(self.width/2, self.height/2+50, text="BioPay", font='Helvetica 64  bold', fill='#FFFFFF')

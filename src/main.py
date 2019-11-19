@@ -93,8 +93,10 @@ class App(object):
         canvas = Canvas(data.root, width=data.width, height=data.height)
         canvas.pack()
 
-        self.appStarted(data)
+        # prevent the window from being resizeable
+        data.root.resizable(False, False)
 
+        self.appStarted(data)
 
         # Basic bindings. Note that only timer events will redraw.
         data.root.bind("<Button-1>", lambda event: self.mousePressed(event, data))
