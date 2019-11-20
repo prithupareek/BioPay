@@ -49,5 +49,27 @@ class SQLConnection(object):
 
         return result
 
+    def updateAccountBalance(self, userid):
+        with self.connection.cursor() as cursor:
+
+            sql = f'SELECT `user_balance` FROM `user_info` WHERE `user_id` = {userid}'
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+        self.connection.commit()
+
+        return result
+
+    def modifyAccountBalance(self, userid, amount):
+        with self.connection.cursor() as cursor:
+
+            sql = f"UPDATE `user_info` SET `user_balance` = '{amount}' WHERE `user_info`.`user_id` = {userid};"
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+        self.connection.commit()
+
+        return result
+
     def closeConn(self):
         self.connection.close()

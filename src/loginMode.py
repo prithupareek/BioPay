@@ -62,6 +62,7 @@ class LoginMode(Mode):
             user.password = currUser['user_password']
             user.firstName = currUser['user_firstName']
             user.type = currUser['user_typ']
+            user.balance = currUser['user_balance']
 
             if user.type == 'C':
                 self.data.customerPortalMode = CustomerPortalMode(self.data)
