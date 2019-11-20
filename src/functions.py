@@ -40,6 +40,7 @@ class InputBox(object):
         self.maxInputLen = 16
         self.hidden=hidden
 
+    # if you click on the textBox, then make the outline thick and if you haven't typed, clear the text
     def mousePressed(self, event):
         if (self.x0 < event.x < self.x1 and
             self.y0 < event.y < self.y1):
@@ -48,7 +49,7 @@ class InputBox(object):
             self.outlineColor = MAIN_COLOR
             if self.inputText == self.name:
                 self.inputText = ''
-            
+        # reset if click off the box
         else:
             self.clicked = False
             self.outlineWidth = 1
@@ -56,7 +57,7 @@ class InputBox(object):
             if self.inputText == '':
                 self.inputText = self.name
             
-            
+    # typing inside the box
     def keyPressed(self, event):
         if self.clicked:
 
@@ -69,6 +70,7 @@ class InputBox(object):
             elif (key in string.ascii_letters or string.digits) and len(key)==1 and len(self.inputText)<self.maxInputLen:
                 self.inputText += key
 
+    # drawing the box and text inside it, if password, then draw * not actual text
     def draw(self, canvas):
         canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, 
                                 width=self.outlineWidth, outline=self.outlineColor)
@@ -119,7 +121,7 @@ class LightButton(Button):
         self.textColor = ACCENT_COLOR
         self.outline = 1
 
-# Toggle Button
+# Toggle Button, toggle between two options (name 1 and name 2)
 class ToggleButton(Button):
     def __init__(self, x0, y0, x1, name, alternativeName):
         super().__init__(x0, y0, x1, name)
