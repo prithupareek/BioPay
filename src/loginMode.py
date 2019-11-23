@@ -49,7 +49,7 @@ class LoginMode(Mode):
         # connect to sql database
         host='35.237.8.126'
         sqlUser='root'
-        password='password'
+        password='[3#1/r>(e}UI6;Q'
         db='biometric_payment_database'
         self.data.sql = SQLConnection(host, sqlUser, password, db)
         currUser = self.data.sql.login(self.usernameBox.inputText, self.passwordBox.inputText)
@@ -63,6 +63,7 @@ class LoginMode(Mode):
             user.firstName = currUser['user_firstName']
             user.type = currUser['user_typ']
             user.balance = currUser['user_balance']
+            user.face = currUser['user_face']
 
             if user.type == 'C':
                 self.data.customerPortalMode = CustomerPortalMode(self.data)

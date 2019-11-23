@@ -7,6 +7,7 @@ from PIL import Image, ImageTk
 from functions import *
 from sql import *
 from userData import *
+import cv2
 
 class Mode(object):
     def __init__(self): pass

@@ -23,7 +23,7 @@ class App(object):
     def __init__(self, width, height):
         self.run(width, height)
         self.data = None
-
+    
     def appStarted(self, data):
         self.data = data
         # Initialize the webcams
@@ -50,14 +50,18 @@ class App(object):
     def drawTextBox(self, canvas, data):
         self.data.activeMode.drawTextBox(canvas, data)
 
-    # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
-    # with slight modifications
-    def opencvToTk(self, frame):
-        """Convert an opencv image to a tkinter image, to display in canvas."""
-        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_img = Image.fromarray(rgb_image)
-        tk_image = ImageTk.PhotoImage(image=pil_img)
-        return tk_image
+    # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py 
+    def cameraFired(self, data):
+        pass
+
+    # # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
+    # # with slight modifications
+    # def opencvToTk(self, frame):
+    #     """Convert an opencv image to a tkinter image, to display in canvas."""
+    #     rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    #     pil_img = Image.fromarray(rgb_image)
+    #     tk_image = ImageTk.PhotoImage(image=pil_img)
+    #     return tk_image
 
     # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
     # with slight modifications
@@ -82,6 +86,8 @@ class App(object):
         data = Struct()
         data.width = width
         data.height = height
+
+        # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
         data.camera_index = 0
         data.cameraOn = False
 
@@ -121,10 +127,11 @@ class App(object):
         def redrawAllWrapper(canvas, data):
             start = time.time()
 
+            # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
             if data.cameraOn:
                 # Get the camera frame and get it processed.
                 _, data.frame = data.camera.read()
-                # self.cameraFired(data)
+                self.cameraFired(data)
 
             # Redrawing code
             canvas.delete(ALL)
@@ -145,8 +152,9 @@ class App(object):
         # Loop tkinter
         data.root.mainloop()
 
+        # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
         # Once the loop is done, release the camera.
-        # print("Releasing camera!")
-        # data.camera.release()
+        print("Releasing camera!")
+        data.camera.release()
 
 App(1000, 600)

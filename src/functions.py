@@ -4,12 +4,22 @@
 from PIL import Image, ImageTk
 import string
 import math
+import cv2
 
 # colors
 MAIN_COLOR = '#2178cf'
 ACCENT_COLOR = '#21cfcf'
 ACCENT_COLOR_DARK = '#116969'
 GRAY_COLOR = '#d8d8d8'
+
+# From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
+# with slight modifications
+def opencvToTk(frame):
+    """Convert an opencv image to a tkinter image, to display in canvas."""
+    rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(rgb_image)
+    tk_image = ImageTk.PhotoImage(image=pil_img)
+    return tk_image
 
 # From cmu_112_graphics.py version 0.8.5
 def scaleImage(image, scale, antialias=False):

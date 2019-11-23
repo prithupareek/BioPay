@@ -71,5 +71,38 @@ class SQLConnection(object):
 
         return result
 
+    def modifyAccount(self, userid, username, password, firstName):
+        with self.connection.cursor() as cursor:
+
+            sql = f"UPDATE `user_info` SET `user_name` = '{username}', `user_password` = '{password}', `user_firstName` = '{firstName}' WHERE `user_info`.`user_id` = {userid}"
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+        self.connection.commit()
+
+        return result
+
+    def getImage(self, userid):
+        with self.connection.cursor() as cursor:
+
+            sql = f'SELECT `user_face` FROM `user_info` WHERE `user_id` = {userid};'
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+        self.connection.commit()
+
+        return result
+
+    def updateFaceImage(self, userid, image):
+        with self.connection.cursor() as cursor:
+
+            sql = f'UPDATE `user_info` SET `user_face` = "{image}" WHERE `user_info`.`user_id` = {userid}'
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+        self.connection.commit()
+
+        return result
+
     def closeConn(self):
         self.connection.close()
