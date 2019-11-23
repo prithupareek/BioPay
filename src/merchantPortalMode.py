@@ -1,52 +1,63 @@
 # Prithu Pareek - Created 11/19/19
 # Merchant Portal Mode
 
-from mode import *
-import loginMode
+from portalMode import *
 
-class MerchantPortalMode(Mode):
+class MerchantPortalMode(PortalMode):
     def __init__(self, data):
-        self.width = data.width
-        self.height = data.height
-        self.data = data
+        super().__init__(data)
 
-        # logo image
-        self.logo = Image.open('images/logo.png')
-        self.logo = scaleImage(self.logo, 0.1, antialias=True)
-        self.tkLogo = ImageTk.PhotoImage(self.logo)
+        self.type = 'Merchant'
 
-        # logout button
-        self.logoutButton = DarkButton(self.width-185, 90,
-                                  self.width-25,
-                                  name='Logout')
+    def mousePressed(self, event, data):  
+        if self.modifyingMoney:
+            self.moneyInput.mousePressed(event)
+            self.submitMoneyButton.mousePressed(event)
 
-    def mousePressed(self, event, data):
-        self.logoutButton.mousePressed(event)
+            if not (self.width/2-200<event.x<self.width/2+200 and
+                    self.height/2-80<event.y<self.height/2+80):
+                self.modifyingMoney = False
+        elif self.inSettingsMode:
+            self.submitSettingButton.mousePressed(event)
+            self.usernameBox.mousePressed(event)
+            self.passwordBox.mousePressed(event)
+            self.nameBox.mousePressed(event)
+
+            if not (self.width/2-200<event.x<self.width/2+200 and
+                    self.height/2-200<event.y<self.height/2+200):
+                self.inSettingsMode = False
+        else:
+            self.logoutButton.mousePressed(event)
+            self.settingsButton.mousePressed(event)
+            self.addMoneyButton.mousePressed(event)
+            self.removeMoneyButton.mousePressed(event)
 
         if self.logoutButton.clicked:
             self.onLogoutButtonClickEvent()
+        if self.addMoneyButton.clicked:
+            self.addMoneyButton.mouseReleased(event)
+            self.onMoneyClickEvent(1)
+        if self.removeMoneyButton.clicked:
+            self.removeMoneyButton.mouseReleased(event)
+            self.onMoneyClickEvent(-1)
+        if self.submitMoneyButton.clicked:
+            self.submitMoneyButton.mouseReleased(event)
+            self.onSubmitMoneyClick()
+        if self.settingsButton.clicked:
+            self.settingsButton.mouseReleased(event)
+            self.onSettingsButtonClickEvent()
+        if self.submitSettingButton.clicked:
+            self.submitSettingButton.mouseReleased(event)
+            self.onSubmitSettingsButtonClickEvent()
 
-    def onLogoutButtonClickEvent(self):
-        user = Struct()
-        self.data.loginMode = loginMode.LoginMode(self.data)
-        self.data.activeMode = self.data.loginMode
 
     def mouseReleased(self, event, data):
-        self.logoutButton.mouseReleased(event)
-
-    def redrawAll(self, canvas, data):
-        # header
-        canvas.create_rectangle(0, 0, self.width, 70, fill=MAIN_COLOR)
-        canvas.create_image(self.width/2, 35, image=self.tkLogo)
-
-        # Cutomer Portal text
-        canvas.create_text(25, 90, text=f'Welcome, {user.firstName}!', font='Helvetica 36', anchor='nw')
-        # welcome text
-        canvas.create_text(25, 130, text='(Merchant)', font='Helvetica 12 italic', anchor='nw')
-
-        # logout button
-        self.logoutButton.draw(canvas)
-
-        # footer
-        canvas.create_rectangle(0,self.height,self.width, self.height/2+250, fill=MAIN_COLOR)
-        canvas.create_text(self.width/2, self.height/2+275, text='Created By Prithu Pareek 2019', fill='#FFFFFF')
+        if self.modifyingMoney:
+            self.submitMoneyButton.mouseReleased(event)
+        elif self.inSettingsMode:
+            self.submitSettingButton.mouseReleased(event)
+        else:
+            self.logoutButton.mouseReleased(event)
+            self.settingsButton.mouseReleased(event)
+            self.addMoneyButton.mouseReleased(event)
+            self.removeMoneyButton.mouseReleased(event)
