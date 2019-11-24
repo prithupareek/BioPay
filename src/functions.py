@@ -153,11 +153,98 @@ class ToggleButton(Button):
     def mouseReleased(self, event):
         pass
 
+# scroll button
+class ScrollButton(Button):
+    def __init__(self, x0, y0, name):
+        super().__init__(x0, y0, x0+10, name)
+        (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x0+30, y0+30)
+
+    def draw(self, canvas):
+        canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, fill=self.fillColor, width=self.outline, outline=GRAY_COLOR)
+        canvas.create_text((self.x1-self.x0)/2+self.x0, (self.y1-self.y0)/2+self.y0, text=self.name, font='16', fill=self.textColor)
+
+
 # Table class
 class Table(object):
-    pass
+    def __init__(self, x0, y0, x1, rows, name):
+        (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x1, y0+60*rows)
+        self.numRows = rows
+        self.rows = []
+        self.name = name
+        self.scroll = 0
+        self.scrollUpButton = ScrollButton(x1+5, (self.y1-self.y0)//3+self.y0+30, name=u"\u25B2")
+        self.scrollDownButton = ScrollButton(x1+5, 2*(self.y1-self.y0)//3 + self.y0+30, name=u"\u25BC")
+        self.onScreen = []
+
+    def mousePressed(self, event):
+        self.scrollUpButton.mousePressed(event)
+        self.scrollDownButton.mousePressed(event)
+
+        if self.scrollUpButton.clicked and self.scroll+self.numRows < len(self.rows):
+            self.scroll += 1
+        elif self.scrollDownButton.clicked and self.scroll > 0:
+            self.scroll -= 1
+
+    def mouseReleased(self, event):
+        self.scrollUpButton.mouseReleased(event)
+        self.scrollDownButton.mouseReleased(event)
+
+    def addProductRow(self, name, price):
+          self.rows.append(ProductTableRow(self.x0, self.y0+30+60*len(self.rows), self.x1, name, price))
+
+    def addCartRow(self, name, price):
+          self.rows.insert(0, CartRow(self.x0, self.y0+30+60*len(self.rows), self.x1, name, price))
+
+    def draw(self, canvas):
+        canvas.create_text(self.x0, self.y0, text=self.name, font='Helvetica 24', anchor='nw')
+        canvas.create_rectangle(self.x0, self.y0+30, self.x1, self.y1+30, outline=GRAY_COLOR, width=1, fill='#FFFFFF')
+
+        # draw the rows, but allow for scrolling, if not empty
+        if len(self.rows) > 0:
+
+            start = self.scroll
+            end = min((self.scroll+self.numRows),len(self.rows))
+
+            self.onScreen = [self.rows[i] for i in range(start, end)]
+
+            for i in range(start, end):
+                self.rows[i].updateYPos((i-self.scroll)*60 + self.y0 + 30)
+
+                self.rows[i].draw(canvas)
+
+        # draw the scroll buttons
+        self.scrollUpButton.draw(canvas)
+        self.scrollDownButton.draw(canvas)
 
 # TableRow class
-class TableRow(object):
-    pass
+class ProductTableRow(object):
+    def __init__(self, x0, y0, x1, name, price):
+        (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x1, y0+60)
+        self.name = name
+        self.price = price
+        self.button = DarkButton(2*(x1-x0)//3 + self.x0, y0+10, 2*(x1-x0)//3 + self.x0+175, "Add to Cart")
+
+    def updateYPos(self, newY0):
+        self.y0 = newY0
+        self.y1 = newY0 + 60
+        self.button.y0 = newY0 + 10
+        self.button.y1 = self.button.y0 + 40
+
+    def mousePressed(self, event):
+        self.button.mousePressed(event)
+
+    def mouseReleased(self, event):
+        self.button.mouseReleased(event)
+
+    def draw(self, canvas):
+        canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, outline=GRAY_COLOR, width=1, fill='#FFFFFF')
+        canvas.create_text(self.x0+25, (self.y1-self.y0)/2+self.y0, text=self.name, font='Helvetica 24', fill='#000000', anchor='w')
+        canvas.create_text((self.x1-self.x0)//3 + self.x0 +25, (self.y1-self.y0)/2+self.y0, text="$"+str(self.price), font='Helvetica 24', fill='#000000', anchor='w')
+        self.button.draw(canvas)
+
+class CartRow(ProductTableRow):
+    def __init__(self, x0, y0, x1, name, price):
+        super().__init__(x0, y0, x1, name, price)
+        self.button.name = "Remove"
+
 

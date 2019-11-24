@@ -49,7 +49,7 @@ class PortalMode(Mode):
                                   self.width-25,
                                   name='Add Money')
         # remove money button
-        self.removeMoneyButton = DarkButton(self.width-350, 335,
+        self.removeMoneyButton = LightButton(self.width-350, 335,
                                   self.width-25,
                                   name='Remove Money')
         # modify money input
@@ -173,8 +173,8 @@ class PortalMode(Mode):
         self.drawAccountBalance(canvas)
 
         # footer
-        canvas.create_rectangle(0,self.height,self.width, self.height/2+280, fill=MAIN_COLOR)
-        canvas.create_text(self.width/2, self.height/2+290, text='Created By Prithu Pareek 2019', fill='#FFFFFF')
+        canvas.create_rectangle(0,self.height,self.width, self.height/2+330, fill=MAIN_COLOR)
+        canvas.create_text(self.width/2, self.height/2+340, text='Created By Prithu Pareek 2019', fill='#FFFFFF')
 
         if self.modifyingMoney:
             self.drawMoneyPane(canvas)

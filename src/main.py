@@ -154,7 +154,8 @@ class App(object):
 
         # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
         # Once the loop is done, release the camera.
-        print("Releasing camera!")
-        data.camera.release()
+        if data.cameraOn:
+            print("Releasing camera!")
+            data.camera.release()
 
-App(1000, 600)
+App(1000, 700)

@@ -12,6 +12,23 @@ class MerchantPortalMode(PortalMode):
         # get inventory data
         self.inventory = data.sql.getInventoryData(user.inventoryTableName)
 
+        # make the inventory table
+        self.inventoryTable = Table(25, 150, 600, 3, name='Inventory')
+        # add the items to the table
+        for item in self.inventory:
+            self.inventoryTable.addProductRow(item['item_name'], item["item_price"])
+
+        self.cart = []
+        self.cartTotal = 0
+
+        # make table for cart (empty at first)
+        self.cartTable = Table(25, 375, 600, 3, name='Cart')
+
+        # checkout button
+        self.checkoutButton = DarkButton(self.width-350, 395,
+                                  self.width-25,
+                                  name='Checkout')
+
 
     def mousePressed(self, event, data):  
         if self.modifyingMoney:
@@ -35,6 +52,30 @@ class MerchantPortalMode(PortalMode):
             self.settingsButton.mousePressed(event)
             self.addMoneyButton.mousePressed(event)
             self.removeMoneyButton.mousePressed(event)
+            self.checkoutButton.mousePressed(event)
+
+            # inventory row mouse pressed to add items to cart
+            for row in self.inventoryTable.onScreen:
+                row.mousePressed(event)
+                if row.button.clicked:
+                    self.cart.append((row.name, row.price))
+                    self.cartTable.addCartRow(self.cart[-1][0], self.cart[-1][1])
+                    self.cartTotal += self.cart[-1][1]
+
+            # mouse pressed to remove items from cart
+            index = 0
+            while index < len(self.cart):
+                row = self.cartTable.rows[index]
+                row.mousePressed(event)
+                if row.button.clicked:
+                    self.cartTotal -= self.cart.pop(index)[1]
+                    self.cartTable.rows.pop(index)
+                else:
+                    index += 1
+
+            # table mouse pressed for scrolling
+            self.inventoryTable.mousePressed(event)
+            self.cartTable.mousePressed(event)
 
         if self.logoutButton.clicked:
             self.onLogoutButtonClickEvent()
@@ -64,3 +105,26 @@ class MerchantPortalMode(PortalMode):
             self.settingsButton.mouseReleased(event)
             self.addMoneyButton.mouseReleased(event)
             self.removeMoneyButton.mouseReleased(event)
+            self.checkoutButton.mouseReleased(event)
+
+            # row mouse released
+            for row in self.inventoryTable.onScreen:
+                row.mouseReleased(event)
+
+            # table mouse released for scrolling
+            self.inventoryTable.mouseReleased(event)
+            self.cartTable.mouseReleased(event)
+
+    def redrawAll(self, canvas, data):
+
+        # draw the table
+        self.inventoryTable.draw(canvas)
+        self.cartTable.draw(canvas)
+
+        # draw total
+        canvas.create_text(25, 600, text=f'Total: ${self.cartTotal}', anchor='nw', font='Helvetic 36 bold')
+
+        # checkout button
+        self.checkoutButton.draw(canvas)
+
+        super().redrawAll(canvas, data)
