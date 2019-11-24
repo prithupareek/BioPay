@@ -16,10 +16,11 @@ class MerchantPortalMode(PortalMode):
         self.inventoryTable = Table(25, 150, 600, 3, name='Inventory')
         # add the items to the table
         for item in self.inventory:
-            self.inventoryTable.addProductRow(item['item_name'], item["item_price"])
+            self.inventoryTable.addRow(item['item_name'], item["item_price"], mode='Add')
 
         self.cart = []
         self.cartTotal = 0
+        # self.onScreenCart = []
 
         # make table for cart (empty at first)
         self.cartTable = Table(25, 375, 600, 3, name='Cart')
@@ -28,6 +29,11 @@ class MerchantPortalMode(PortalMode):
         self.checkoutButton = DarkButton(self.width-350, 395,
                                   self.width-25,
                                   name='Checkout')
+        self.debugCounter = 0
+
+    # def timerFired(self, data):
+    #     # print(len(self.onScreenCart))
+    #     # print(self.onScreenCart)
 
 
     def mousePressed(self, event, data):  
@@ -54,28 +60,49 @@ class MerchantPortalMode(PortalMode):
             self.removeMoneyButton.mousePressed(event)
             self.checkoutButton.mousePressed(event)
 
-            # inventory row mouse pressed to add items to cart
-            for row in self.inventoryTable.onScreen:
-                row.mousePressed(event)
-                if row.button.clicked:
-                    self.cart.append((row.name, row.price))
-                    self.cartTable.addCartRow(self.cart[-1][0], self.cart[-1][1])
-                    self.cartTotal += self.cart[-1][1]
+            # modify onscreen cart every time a mouse is pressed
+            # self.onScreenCart = [(row.name, row.price) for row in (self.cartTable.onScreen)]
 
-            # mouse pressed to remove items from cart
-            index = 0
-            while index < len(self.cart):
-                row = self.cartTable.rows[index]
-                row.mousePressed(event)
-                if row.button.clicked:
-                    self.cartTotal -= self.cart.pop(index)[1]
-                    self.cartTable.rows.pop(index)
-                else:
-                    index += 1
+            # # inventory row mouse pressed to add items to cart
+            # for row in self.inventoryTable.onScreen:
+            #     row.mousePressed(event)
+            #     if row.button.clicked:
+            #         self.cart.append((row.name, row.price))
+            #         self.cartTable.addCartRow(self.cart[-1][0], self.cart[-1][1])
+            #         self.cartTotal += self.cart[-1][1]
+            #         if len(self.onScreenCart) >= self.inventoryTable.numRows:
+            #             self.onScreenCart = self.onScreenCart[:-1]
+            #         self.onScreenCart = [(row.name, row.price)] + self.onScreenCart[:]
 
-            # table mouse pressed for scrolling
+            # # mouse pressed to remove items from cart
+            # index = 0
+            # while index < len(self.cartTable.onScreen):
+            #     row1 = self.cartTable.rows[index]
+            #     row1.mousePressed(event)
+            #     if row1.button.clicked:
+            #         self.cartTotal -= self.onScreenCart.pop(index)[1]
+            #         self.cartTable.rows.pop(index)
+            #     else:
+            #         index += 1
+            # # table mouse pressed for scrolling
             self.inventoryTable.mousePressed(event)
             self.cartTable.mousePressed(event)
+
+            # loop through inventory to check if button clicked, and then add to cart
+            for row in self.inventoryTable.rows:
+                if row.button.clicked:
+                    # self.cart = [(row.name, row.price)] + self.cart[:]
+                    # self.cartTotal += self.cart[0][1]
+                    self.cartTable.addRow(row.name, row.price, mode='Remove')
+
+            # loop through the cart rows to check if button clicked, and then remove from cart
+            for row in self.cartTable.rows:
+                if row.button.clicked:
+                    self.cartTable.removeRow(row)
+                    break
+
+            self.cart = [(row.name, row.price) for row in self.cartTable.rows]
+            self.cartTotal = sum([price for (name, price) in self.cart])
 
         if self.logoutButton.clicked:
             self.onLogoutButtonClickEvent()

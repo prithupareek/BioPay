@@ -185,15 +185,31 @@ class Table(object):
         elif self.scrollDownButton.clicked and self.scroll > 0:
             self.scroll -= 1
 
+        # keep loop on screen
+        start = self.scroll
+        end = min((self.scroll+self.numRows),len(self.rows))
+
+        # loop through the buttons on screen
+        for i in range(start, end):
+            self.rows[i].mousePressed(event)
+
     def mouseReleased(self, event):
         self.scrollUpButton.mouseReleased(event)
         self.scrollDownButton.mouseReleased(event)
 
-    def addProductRow(self, name, price):
-          self.rows.append(ProductTableRow(self.x0, self.y0+30+60*len(self.rows), self.x1, name, price))
+        # keep loop on screen
+        start = self.scroll
+        end = min((self.scroll+self.numRows),len(self.rows))
 
-    def addCartRow(self, name, price):
-          self.rows.insert(0, CartRow(self.x0, self.y0+30+60*len(self.rows), self.x1, name, price))
+        # loop through the buttons on screen
+        for i in range(start, end):
+            self.rows[i].mouseReleased(event)
+
+    def addRow(self, name, price, mode):
+          self.rows.insert(0, TableRow(self.x0, self.y0+30+60*len(self.rows), self.x1, name, price, mode))
+
+    def removeRow(self, row):
+        self.rows.remove(row)
 
     def draw(self, canvas):
         canvas.create_text(self.x0, self.y0, text=self.name, font='Helvetica 24', anchor='nw')
@@ -217,12 +233,13 @@ class Table(object):
         self.scrollDownButton.draw(canvas)
 
 # TableRow class
-class ProductTableRow(object):
-    def __init__(self, x0, y0, x1, name, price):
+class TableRow(object):
+    def __init__(self, x0, y0, x1, name, price, mode):
         (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x1, y0+60)
         self.name = name
         self.price = price
-        self.button = DarkButton(2*(x1-x0)//3 + self.x0, y0+10, 2*(x1-x0)//3 + self.x0+175, "Add to Cart")
+        self.mode = mode
+        self.button = DarkButton(2*(x1-x0)//3 + self.x0, y0+10, 2*(x1-x0)//3 + self.x0+175, mode)
 
     def updateYPos(self, newY0):
         self.y0 = newY0
@@ -241,10 +258,5 @@ class ProductTableRow(object):
         canvas.create_text(self.x0+25, (self.y1-self.y0)/2+self.y0, text=self.name, font='Helvetica 24', fill='#000000', anchor='w')
         canvas.create_text((self.x1-self.x0)//3 + self.x0 +25, (self.y1-self.y0)/2+self.y0, text="$"+str(self.price), font='Helvetica 24', fill='#000000', anchor='w')
         self.button.draw(canvas)
-
-class CartRow(ProductTableRow):
-    def __init__(self, x0, y0, x1, name, price):
-        super().__init__(x0, y0, x1, name, price)
-        self.button.name = "Remove"
 
 
