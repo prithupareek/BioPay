@@ -56,7 +56,8 @@ class CreateAccountMode(Mode):
             self.userAlreadyExists = True
             return
 
-        self.userAlreadyExists = False   
+        self.userAlreadyExists = False
+
         currUser = self.data.sql.createAccount(self.usernameBox.inputText, self.passwordBox.inputText, 
                                                self.nameBox.inputText, self.accountTypeButton.name[0])
 
@@ -69,10 +70,17 @@ class CreateAccountMode(Mode):
         user.balance = currUser['user_balance']
         user.face = currUser['user_face']
 
+
         if user.type == 'C':
             self.data.customerPortalMode = CustomerPortalMode(self.data)
             self.data.activeMode=self.data.customerPortalMode
         else:
+            # if merchant, then create merchant inventory table, and add reference to user_id table
+            self.data.sql.setInventoryReference(user.id)
+            user.inventoryTableName = f"M_{user.id}_Inventory"
+            self.data.sql.createMerchantInventoryTable(user.id)
+
+
             self.data.merchantPortalMode = MerchantPortalMode(self.data)
             self.data.activeMode=self.data.merchantPortalMode
 

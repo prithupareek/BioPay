@@ -153,4 +153,11 @@ class ToggleButton(Button):
     def mouseReleased(self, event):
         pass
 
+# Table class
+class Table(object):
+    pass
+
+# TableRow class
+class TableRow(object):
+    pass
 

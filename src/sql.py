@@ -104,5 +104,44 @@ class SQLConnection(object):
 
         return result
 
+    def createMerchantInventoryTable(self, userid):
+        with self.connection.cursor() as cursor:
+
+            sql = f"""
+                    CREATE TABLE M_{userid}_Inventory(
+                        item_id INT(100) AUTO_INCREMENT PRIMARY KEY,
+                        item_name VARCHAR(100),
+                        item_price DECIMAL(10, 2)
+                    );
+                   """
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+        self.connection.commit()
+
+        return result
+
+    def setInventoryReference(self, userid):
+        with self.connection.cursor() as cursor:
+
+            sql = f'UPDATE `user_info` SET `user_inventory` = "M_{userid}_Inventory" WHERE `user_info`.`user_id` = {userid}'
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+        self.connection.commit()
+
+        return result
+
+    def getInventoryData(self, tableName):
+        with self.connection.cursor() as cursor:
+
+            sql = f'SELECT * FROM `{tableName}`;'
+            cursor.execute(sql)
+            result = cursor.fetchall()
+
+        self.connection.commit()
+
+        return result
+
     def closeConn(self):
         self.connection.close()

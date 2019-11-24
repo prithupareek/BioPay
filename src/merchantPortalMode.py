@@ -9,6 +9,10 @@ class MerchantPortalMode(PortalMode):
 
         self.type = 'Merchant'
 
+        # get inventory data
+        self.inventory = data.sql.getInventoryData(user.inventoryTableName)
+
+
     def mousePressed(self, event, data):  
         if self.modifyingMoney:
             self.moneyInput.mousePressed(event)
@@ -49,7 +53,6 @@ class MerchantPortalMode(PortalMode):
         if self.submitSettingButton.clicked:
             self.submitSettingButton.mouseReleased(event)
             self.onSubmitSettingsButtonClickEvent()
-
 
     def mouseReleased(self, event, data):
         if self.modifyingMoney:
