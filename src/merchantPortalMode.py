@@ -26,7 +26,7 @@ class MerchantPortalMode(PortalMode):
         self.cartTable = Table(25, 375, 600, 3, name='Cart')
 
         # checkout button
-        self.checkoutButton = DarkButton(self.width-350, 395,
+        self.checkoutButton = DarkButton(self.width-350, 515,
                                   self.width-25,
                                   name='Checkout')
         self.checkingOut = False
@@ -37,6 +37,26 @@ class MerchantPortalMode(PortalMode):
 
         # used during checkout, set to none by default
         self.transactionFailed = False
+
+        # edit inventory buttons
+        self.addItemButton = DarkButton(self.width-350, 395,
+                                        self.width-25,
+                                        name='Add Item')
+        self.removeItemButton = LightButton(self.width-350, 455,
+                                            self.width-25,
+                                            name='Remove Item')
+        self.editingInventory = False
+
+        # add/remove inventory input boxes and submit button
+        self.itemNameInput = InputBox(self.width/2-160, self.height/2-80,
+                                    self.width/2+160,
+                                    name='Name')
+        self.itemPriceInput = InputBox(self.width/2-160, self.height/2-20,
+                                    self.width/2+160,
+                                    name='Price')
+        self.itemSubmitButton = DarkButton(self.width/2-160, self.height/2+100,
+                                  self.width/2+160,
+                                  name='Submit')
 
 
     def mousePressed(self, event, data):  
@@ -65,12 +85,22 @@ class MerchantPortalMode(PortalMode):
                 print("Releasing camera!")
                 self.data.camera.release()
                 self.data.cameraOn = False
+        elif self.editingInventory:
+            self.itemSubmitButton.mousePressed(event)
+            self.itemNameInput.mousePressed(event)
+            self.itemPriceInput.mousePressed(event)
+
+            if not (self.width/2-200<event.x<self.width/2+200 and
+                    self.height/2-200<event.y<self.height/2+200):
+                self.editingInventory = False
         else:
             self.logoutButton.mousePressed(event)
             self.settingsButton.mousePressed(event)
             self.addMoneyButton.mousePressed(event)
             self.removeMoneyButton.mousePressed(event)
             self.checkoutButton.mousePressed(event)
+            self.addItemButton.mousePressed(event)
+            self.removeItemButton.mousePressed(event)
 
             # table mouse pressed for scrolling
             self.inventoryTable.mousePressed(event)
@@ -115,6 +145,43 @@ class MerchantPortalMode(PortalMode):
         if self.captureImageButton.clicked:
             self.captureImageButton.mouseReleased(event)
             self.onCaptureImageButtonClickEvent()
+        if self.addItemButton.clicked:
+            self.addItemButton.mouseReleased(event)
+            self.onInventoryModifyButtonClickEvent(+1)
+        if self.removeItemButton.clicked:
+            self.removeItemButton.mouseReleased(event)
+            self.onInventoryModifyButtonClickEvent(-1)
+        if self.itemSubmitButton.clicked:
+            self.itemSubmitButton.mouseReleased(event)
+            self.onItemSubmitButtonClickEvent()
+
+    def onItemSubmitButtonClickEvent(self):
+        itemName = self.itemNameInput.inputText
+        itemPrice = self.itemPriceInput.inputText
+
+        # if adding item
+        if self.inventoryModifyMode == 1:
+            self.data.sql.addItemToInventory(user.inventoryTableName, itemName, itemPrice)
+        # removing item
+        elif self.inventoryModifyMode == -1:
+            self.data.sql.removeItemFromInventory(user.inventoryTableName, itemName, itemPrice)
+
+        # update user inventory
+        self.inventory = self.data.sql.getInventoryData(user.inventoryTableName)
+        # make the inventory table
+        self.inventoryTable = Table(25, 150, 600, 3, name='Inventory')
+        # add the items to the table
+        for item in self.inventory:
+            self.inventoryTable.addRow(item['item_name'], item["item_price"], mode='Add')
+
+        # close window pane
+        self.editingInventory = False
+        self.itemNameInput.inputText = self.itemNameInput.name
+        self.itemPriceInput.inputText = self.itemPriceInput.name
+
+    def onInventoryModifyButtonClickEvent(self, mode):
+        self.editingInventory = True
+        self.inventoryModifyMode = mode
 
     def onCaptureImageButtonClickEvent(self):
         # capture the image
@@ -180,12 +247,16 @@ class MerchantPortalMode(PortalMode):
             self.submitSettingButton.mouseReleased(event)
         elif self.checkingOut:
             self.captureImageButton.mouseReleased(event)
+        elif self.editingInventory:
+            self.itemSubmitButton.mouseReleased(event)
         else:
             self.logoutButton.mouseReleased(event)
             self.settingsButton.mouseReleased(event)
             self.addMoneyButton.mouseReleased(event)
             self.removeMoneyButton.mouseReleased(event)
             self.checkoutButton.mouseReleased(event)
+            self.addItemButton.mouseReleased(event)
+            self.removeItemButton.mouseReleased(event)
 
             # row mouse released
             for row in self.inventoryTable.onScreen:
@@ -194,6 +265,13 @@ class MerchantPortalMode(PortalMode):
             # table mouse released for scrolling
             self.inventoryTable.mouseReleased(event)
             self.cartTable.mouseReleased(event)
+
+    def keyPressed(self, event, data):
+        super().keyPressed(event, data)
+
+        if self.editingInventory:
+            self.itemNameInput.keyPressed(event)
+            self.itemPriceInput.keyPressed(event)
 
     # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
     # with slight modifications
@@ -215,6 +293,14 @@ class MerchantPortalMode(PortalMode):
         # draw the capture button
         self.captureImageButton.draw(canvas)
 
+    def drawInventoryEditPane(self, canvas):
+        canvas.create_image(0,0,image=self.tkTransparent)
+        canvas.create_rectangle(self.width/2-200, self.height/2-160, self.width/2+200, self.height/2+160, fill='#FFFFFF')
+        canvas.create_text(self.width/2-160, self.height/2-140, text="Inventory Management", anchor='nw', font='Helvetica 30')
+        self.itemSubmitButton.draw(canvas)
+        self.itemNameInput.draw(canvas)
+        self.itemPriceInput.draw(canvas)
+
     def redrawAll(self, canvas, data):
 
         # draw the table
@@ -224,8 +310,10 @@ class MerchantPortalMode(PortalMode):
         # draw total
         canvas.create_text(25, 600, text=f'Total: ${self.cartTotal}', anchor='nw', font='Helvetic 36 bold')
 
-        # checkout button
+        # buttons
         self.checkoutButton.draw(canvas)
+        self.addItemButton.draw(canvas)
+        self.removeItemButton.draw(canvas)
 
         super().redrawAll(canvas, data)
 
@@ -234,3 +322,5 @@ class MerchantPortalMode(PortalMode):
 
         if self.checkingOut:
             self.drawFaceCapturePane(canvas)
+        elif self.editingInventory:
+            self.drawInventoryEditPane(canvas)

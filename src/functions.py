@@ -37,7 +37,7 @@ class InputBox(object):
                     'asterisk':'*', 'parenleft':'(', 'parenright':')', 'minus':'-', 'underscore':'_', 'plus':'+', 'equal':'=',
                     'quoteleft':'`', 'asciitilde':'~', 'bracketleft':'[', 'bracketright':']', 'braceleft':'{', 'braceright':'}',
                     'backslash':'\\', 'bar':'|', 'semicolon':';', 'colon':':', 'less':'<', 'greater':'>', 'comma':',', 'period':'.',
-                    'slash':'/', 'question':'?'
+                    'slash':'/', 'question':'?', 'space':' '
                 }
 
     def __init__(self, x0, y0, x1, name, hidden=False):

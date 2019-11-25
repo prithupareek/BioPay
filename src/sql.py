@@ -179,5 +179,27 @@ class SQLConnection(object):
 
         return result
 
+    def addItemToInventory(self, inventoryTableName, itemName, itemPrice):
+        with self.connection.cursor() as cursor:
+
+            sql = f"INSERT INTO `{inventoryTableName}`(`item_name`, `item_price`) VALUES ('{itemName}',{itemPrice})"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+
+        self.connection.commit()
+
+        return result
+
+    def removeItemFromInventory(self, inventoryTableName, itemName, itemPrice):
+        with self.connection.cursor() as cursor:
+
+            sql = f"DELETE FROM `{inventoryTableName}` WHERE `item_name` = '{itemName}' AND `item_price` = {itemPrice}"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+
+        self.connection.commit()
+
+        return result
+
     def closeConn(self):
         self.connection.close()
