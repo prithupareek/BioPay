@@ -65,6 +65,7 @@ class LoginMode(Mode):
             user.balance = currUser['user_balance']
             user.face = currUser['user_face']
             user.inventoryTableName = currUser['user_inventory']
+            user.faceEncoding = currUser['user_face_encoding']
 
             if user.type == 'C':
                 self.data.customerPortalMode = CustomerPortalMode(self.data)
@@ -72,6 +73,9 @@ class LoginMode(Mode):
             else:
                 self.data.merchantPortalMode = MerchantPortalMode(self.data)
                 self.data.activeMode=self.data.merchantPortalMode
+
+                # get the face encodings for all the customers
+                user.allFaceEncodings = self.data.sql.getFaceEncodings()
 
     def mouseReleased(self, event, data):
         self.loginButton.mouseReleased(event)

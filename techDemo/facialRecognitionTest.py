@@ -1,5 +1,6 @@
 import face_recognition
 import os
+import numpy as np
 
 # From https://www.cs.cmu.edu/~112/notes/notes-recursion-part2.html
 def removeTempFiles(path, suffix='.DS_Store'):
@@ -12,8 +13,11 @@ def removeTempFiles(path, suffix='.DS_Store'):
 
 # sets the picture to compare everything else to
 picture_of_me = face_recognition.load_image_file("known-faces/Prithu.jpg")
-my_face_encoding = face_recognition.face_encodings(picture_of_me)[0]
-
+my_face_encoding_1 = face_recognition.face_encodings(picture_of_me)[0]
+# my_face_encoding = ast.literal_eval(my_face_encoding_string)
+my_face_encoding_string = my_face_encoding_1.tostring()
+print(my_face_encoding_1)
+my_face_encoding = np.fromstring(my_face_encoding_string, dtype=float)
 
 directory = "unknown-faces"
 

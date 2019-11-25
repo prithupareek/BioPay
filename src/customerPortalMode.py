@@ -93,15 +93,28 @@ class CustomerPortalMode(PortalMode):
 
         # convert to bytearray
         text = base64.b64encode(convertedImage)
+        print(type(text))
         text = text.decode('utf-8')
 
         # save to database
         self.data.sql.updateFaceImage(user.id, text)
-        
+
+        # update face encoding...
+        # opencv stores images in BGR order, so first need to convert to rgb order
+        # From https://github.com/ageitgey/face_recognition/issues/441
+        rgbImage = self.data.frame[:, :, ::-1]
+        myFaceEncoding = face_recognition.face_encodings(rgbImage)[0]
+
+        # convert to string to store in databse
+        encoded = base64.b64encode(myFaceEncoding)
+        encodedString = encoded.decode('utf-8')
+
+        # save to database
+        self.data.sql.updateFaceEncoding(user.id, encodedString)
+
         # put new image on screen
         user.face = text
         self.tkUserImage = opencvToTk(image)
-
 
         # close window
         self.changingFace = False

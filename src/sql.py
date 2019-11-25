@@ -104,6 +104,18 @@ class SQLConnection(object):
 
         return result
 
+    def updateFaceEncoding(self, userid, encoding):
+        with self.connection.cursor() as cursor:
+
+            sql = f"""UPDATE `user_info` SET `user_face_encoding` = '{encoding}' WHERE `user_info`.`user_id` = {userid};"""
+            print(sql)
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+        self.connection.commit()
+
+        return result
+
     def createMerchantInventoryTable(self, userid):
         with self.connection.cursor() as cursor:
 
@@ -137,6 +149,30 @@ class SQLConnection(object):
 
             sql = f'SELECT * FROM `{tableName}`;'
             cursor.execute(sql)
+            result = cursor.fetchall()
+
+        self.connection.commit()
+
+        return result
+
+    def getFaceEncodings(self):
+        with self.connection.cursor() as cursor:
+
+            sql = f"SELECT `user_id`, `user_face_encoding` FROM `user_info` WHERE `user_typ`='C'"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+
+        self.connection.commit()
+
+        return result
+
+    def transferMoney(self, senderId, recpId, amount):
+        with self.connection.cursor() as cursor:
+
+            sub = f"UPDATE `user_info` SET `user_balance` = (SELECT `user_balance` WHERE `user_id`={senderId}) - {amount} WHERE `user_id` = {senderId};"
+            cursor.execute(sub)
+            add = f"UPDATE `user_info` SET `user_balance` = (SELECT `user_balance` WHERE `user_id`={recpId}) + {amount} WHERE `user_id` = {recpId};"
+            cursor.execute(add)
             result = cursor.fetchall()
 
         self.connection.commit()

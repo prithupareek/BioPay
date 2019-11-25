@@ -8,6 +8,8 @@ from functions import *
 from sql import *
 from userData import *
 import cv2
+import face_recognition
+import numpy as np
 
 class Mode(object):
     def __init__(self): pass

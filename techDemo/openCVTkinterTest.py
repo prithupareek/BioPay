@@ -16,6 +16,9 @@ import cv2
 from PIL import Image, ImageTk
 
 import face_recognition
+import base64
+
+faceEncoding = None
 
 def opencvToTk(frame):
     """Convert an opencv image to a tkinter image, to display in canvas."""
@@ -45,19 +48,28 @@ def toggleWebcamState(data):
 def captureImage(data):
     print("Captured image")
     data.imageCaptured = True
-    showPic = cv2.imwrite("filename.jpg",data.frame)
+    # showPic = cv2.imwrite("filename.jpg",data.frame)
     # print(showPic)
+    rgbImage = data.frame[:, :, ::-1]
+    myFaceEncoding = face_recognition.face_encodings(rgbImage)[0]
+    encoded = base64.b64encode(myFaceEncoding)
+    encodedString = encoded.decode('utf-8')
+    print(encodedString)
+    decoded = base64.b64decode(encodedString)
+    data.faceEncoding = np.fromstring(decoded, dtype=float)
+    print(data.faceEncoding == myFaceEncoding)
 
 def compareImages(data):
     # sets the picture to compare everything else to
     picture_of_me = face_recognition.load_image_file("known-faces/Prithu.jpg")
-    my_face_encoding = face_recognition.face_encodings(picture_of_me)[0]
+    # my_face_encoding = face_recognition.face_encodings(picture_of_me)[0]
+    # print(my_face_encoding)
 
     unknownFace = face_recognition.load_image_file("filename.jpg")
     unknownFaceEncoding = face_recognition.face_encodings(unknownFace)[0]
     # print(unknownFaceEncoding)
 
-    results = face_recognition.compare_faces([my_face_encoding], unknownFaceEncoding)
+    results = face_recognition.compare_faces([data.faceEncoding], unknownFaceEncoding)
 
     if results[0] == True:
         data.resultText = "It is a picture of me!"
@@ -120,6 +132,7 @@ def run(width=300, height=300):
     data.webCamOn = False
     data.imageCaptured = False
     data.resultText = ""
+    data.faceEncoding = None
 
     data.timer_delay = 100 # ms
     data.redraw_delay = 50 # ms

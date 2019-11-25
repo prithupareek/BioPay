@@ -69,6 +69,7 @@ class CreateAccountMode(Mode):
         user.type = currUser['user_typ']
         user.balance = currUser['user_balance']
         user.face = currUser['user_face']
+        user.faceEncoding = currUser['user_face_encoding']
 
 
         if user.type == 'C':

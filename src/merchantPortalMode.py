@@ -29,11 +29,14 @@ class MerchantPortalMode(PortalMode):
         self.checkoutButton = DarkButton(self.width-350, 395,
                                   self.width-25,
                                   name='Checkout')
-        self.debugCounter = 0
+        self.checkingOut = False
+        # capture picture button
+        self.captureImageButton = DarkButton(self.width/2-160, self.height/2+110,
+                                  self.width/2+160,
+                                  name='Capture')
 
-    # def timerFired(self, data):
-    #     # print(len(self.onScreenCart))
-    #     # print(self.onScreenCart)
+        # used during checkout, set to none by default
+        self.transactionFailed = False
 
 
     def mousePressed(self, event, data):  
@@ -53,6 +56,15 @@ class MerchantPortalMode(PortalMode):
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-200<event.y<self.height/2+200):
                 self.inSettingsMode = False
+        elif self.checkingOut:
+            self.captureImageButton.mousePressed(event)
+
+            if not (self.width/2-200<event.x<self.width/2+200 and
+                    self.height/2-200<event.y<self.height/2+200):
+                self.checkingOut = False
+                print("Releasing camera!")
+                self.data.camera.release()
+                self.data.cameraOn = False
         else:
             self.logoutButton.mousePressed(event)
             self.settingsButton.mousePressed(event)
@@ -60,31 +72,7 @@ class MerchantPortalMode(PortalMode):
             self.removeMoneyButton.mousePressed(event)
             self.checkoutButton.mousePressed(event)
 
-            # modify onscreen cart every time a mouse is pressed
-            # self.onScreenCart = [(row.name, row.price) for row in (self.cartTable.onScreen)]
-
-            # # inventory row mouse pressed to add items to cart
-            # for row in self.inventoryTable.onScreen:
-            #     row.mousePressed(event)
-            #     if row.button.clicked:
-            #         self.cart.append((row.name, row.price))
-            #         self.cartTable.addCartRow(self.cart[-1][0], self.cart[-1][1])
-            #         self.cartTotal += self.cart[-1][1]
-            #         if len(self.onScreenCart) >= self.inventoryTable.numRows:
-            #             self.onScreenCart = self.onScreenCart[:-1]
-            #         self.onScreenCart = [(row.name, row.price)] + self.onScreenCart[:]
-
-            # # mouse pressed to remove items from cart
-            # index = 0
-            # while index < len(self.cartTable.onScreen):
-            #     row1 = self.cartTable.rows[index]
-            #     row1.mousePressed(event)
-            #     if row1.button.clicked:
-            #         self.cartTotal -= self.onScreenCart.pop(index)[1]
-            #         self.cartTable.rows.pop(index)
-            #     else:
-            #         index += 1
-            # # table mouse pressed for scrolling
+            # table mouse pressed for scrolling
             self.inventoryTable.mousePressed(event)
             self.cartTable.mousePressed(event)
 
@@ -121,12 +109,77 @@ class MerchantPortalMode(PortalMode):
         if self.submitSettingButton.clicked:
             self.submitSettingButton.mouseReleased(event)
             self.onSubmitSettingsButtonClickEvent()
+        if self.checkoutButton.clicked:
+            self.checkoutButton.mouseReleased(event)
+            self.onCheckoutButtonClickEvent()
+        if self.captureImageButton.clicked:
+            self.captureImageButton.mouseReleased(event)
+            self.onCaptureImageButtonClickEvent()
+
+    def onCaptureImageButtonClickEvent(self):
+        # capture the image
+        image = self.data.frame
+
+        # get face encoding for image
+        # opencv stores images in BGR order, so first need to convert to rgb order
+        # From https://github.com/ageitgey/face_recognition/issues/441
+        rgbImage = image[:, :, ::-1]
+        myFaceEncoding = face_recognition.face_encodings(rgbImage)[0]
+
+        transactionCustId = None
+
+        # compare to other encodings and find a match
+        for customer in user.allFaceEncodings:
+            uid = customer['user_id']
+            b64Encoded = customer['user_face_encoding']
+            
+            if b64Encoded != None:
+                decoded = base64.b64decode(b64Encoded)
+                faceEncoding = np.fromstring(decoded, dtype=float)
+
+                faceCompare = face_recognition.compare_faces([faceEncoding], myFaceEncoding)
+
+                if faceCompare[0] == True:
+                    transactionCustId = uid
+                    break
+
+        # complete transaction
+        # if no cust found
+        if transactionCustId == None:
+            self.transactionFailed = True
+        else:
+            self.data.sql.transferMoney(transactionCustId, user.id, self.cartTotal)
+            self.transactionFailed = False
+            
+            # once transaction is done, reset cart
+            self.cart = []
+            self.cartTotal = 0
+            self.cartTable = Table(25, 375, 600, 3, name='Cart')
+
+
+        # close window
+        self.checkingOut = False
+        print("Releasing camera!")
+        self.data.camera.release()
+        self.data.cameraOn = False
+
+    def onCheckoutButtonClickEvent(self):
+        # turn on the webcam 
+        # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
+        # with slight modifications
+        camera = cv2.VideoCapture(self.data.camera_index)
+        self.data.camera = camera
+        self.data.cameraOn = True
+        self.data.imageCaptured = False
+        self.checkingOut = True
 
     def mouseReleased(self, event, data):
         if self.modifyingMoney:
             self.submitMoneyButton.mouseReleased(event)
         elif self.inSettingsMode:
             self.submitSettingButton.mouseReleased(event)
+        elif self.checkingOut:
+            self.captureImageButton.mouseReleased(event)
         else:
             self.logoutButton.mouseReleased(event)
             self.settingsButton.mouseReleased(event)
@@ -142,6 +195,26 @@ class MerchantPortalMode(PortalMode):
             self.inventoryTable.mouseReleased(event)
             self.cartTable.mouseReleased(event)
 
+    # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
+    # with slight modifications
+    def drawCamera(self, canvas, data):
+        # resize image
+        self.data.frame = cv2.resize(self.data.frame, (200, 113))
+        data.tk_image = opencvToTk(self.data.frame)
+        canvas.create_image(data.width / 2, data.height / 2, image=data.tk_image)
+
+    # TODO: Fix exact UI Pixel stuff
+    def drawFaceCapturePane(self, canvas):
+        canvas.create_image(0,0,image=self.tkTransparent)
+        canvas.create_rectangle(self.width/2-200, self.height/2-160, self.width/2+200, self.height/2+160, fill='#FFFFFF')
+        canvas.create_text(self.width/2-160, self.height/2-140, text="Camera", anchor='nw', font='Helvetica 30')
+
+        # draw the webcam
+        self.drawCamera(canvas, self.data)
+
+        # draw the capture button
+        self.captureImageButton.draw(canvas)
+
     def redrawAll(self, canvas, data):
 
         # draw the table
@@ -155,3 +228,9 @@ class MerchantPortalMode(PortalMode):
         self.checkoutButton.draw(canvas)
 
         super().redrawAll(canvas, data)
+
+        if self.transactionFailed:
+            canvas.create_text(300, 600, text="Transaction Failed. Try again.", anchor='nw', font='Helvetic 16', fill='red')
+
+        if self.checkingOut:
+            self.drawFaceCapturePane(canvas)
