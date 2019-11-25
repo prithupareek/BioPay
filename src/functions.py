@@ -205,8 +205,8 @@ class Table(object):
         for i in range(start, end):
             self.rows[i].mouseReleased(event)
 
-    def addRow(self, name, price, mode):
-          self.rows.insert(0, TableRow(self.x0, self.y0+30+60*len(self.rows), self.x1, name, price, mode))
+    def addRow(self, prodID, name, price, mode):
+          self.rows.insert(0, TableRow(self.x0, self.y0+30+60*len(self.rows), self.x1, name, price, mode, prodID))
 
     def removeRow(self, row):
         self.rows.remove(row)
@@ -234,11 +234,12 @@ class Table(object):
 
 # TableRow class
 class TableRow(object):
-    def __init__(self, x0, y0, x1, name, price, mode):
+    def __init__(self, x0, y0, x1, name, price, mode, prodID):
         (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x1, y0+60)
         self.name = name
         self.price = price
         self.mode = mode
+        self.prodId = prodID
         self.button = DarkButton(2*(x1-x0)//3 + self.x0, y0+10, 2*(x1-x0)//3 + self.x0+175, mode)
 
     def updateYPos(self, newY0):

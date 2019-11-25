@@ -201,5 +201,43 @@ class SQLConnection(object):
 
         return result
 
+    def logTransaction(self, senderId, recpId, amount, itemList):
+        with self.connection.cursor() as cursor:
+
+            # first create at row with the transaction info
+            addSql = f"INSERT INTO `transaction_history`(`sender_id`, `recipient_id`, `trans_amount`) VALUES ({senderId},{recpId},{amount});"
+            cursor.execute(addSql)
+            getIdSql = f'SELECT @@IDENTITY AS "id";'
+            cursor.execute(getIdSql)
+            result = cursor.fetchall()
+            transId = result[0]['id']
+            
+            # create the table for the cart
+            cartTableSql = f"""
+                    CREATE TABLE cart_{transId}(
+                        item_id INT(255),
+                        item_name VARCHAR(100),
+                        item_price DECIMAL(10, 2)
+                    );
+                   """
+            cursor.execute(cartTableSql)
+
+            # add the items into the cart table
+            for item in itemList:
+
+                (prodId, name, price) = (item[0], item[1], item[2])
+
+                addToCartSql = f"INSERT INTO `cart_{transId}`(`item_id`, `item_name`, `item_price`) VALUES ({prodId}, '{name}', {price})"
+                cursor.execute(addToCartSql)
+
+            # add the cart tablename to the transaction history table
+            addCartNameSql = f"UPDATE `transaction_history` SET `item_list`='cart_{transId}';"
+            cursor.execute(addCartNameSql)
+
+
+        self.connection.commit()
+
+        return result
+
     def closeConn(self):
         self.connection.close()

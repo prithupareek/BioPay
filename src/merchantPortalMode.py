@@ -16,7 +16,7 @@ class MerchantPortalMode(PortalMode):
         self.inventoryTable = Table(25, 150, 600, 3, name='Inventory')
         # add the items to the table
         for item in self.inventory:
-            self.inventoryTable.addRow(item['item_name'], item["item_price"], mode='Add')
+            self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], mode='Add')
 
         self.cart = []
         self.cartTotal = 0
@@ -111,7 +111,7 @@ class MerchantPortalMode(PortalMode):
                 if row.button.clicked:
                     # self.cart = [(row.name, row.price)] + self.cart[:]
                     # self.cartTotal += self.cart[0][1]
-                    self.cartTable.addRow(row.name, row.price, mode='Remove')
+                    self.cartTable.addRow(row.prodId, row.name, row.price, mode='Remove')
 
             # loop through the cart rows to check if button clicked, and then remove from cart
             for row in self.cartTable.rows:
@@ -119,8 +119,8 @@ class MerchantPortalMode(PortalMode):
                     self.cartTable.removeRow(row)
                     break
 
-            self.cart = [(row.name, row.price) for row in self.cartTable.rows]
-            self.cartTotal = sum([price for (name, price) in self.cart])
+            self.cart = [(row.prodId, row.name, row.price) for row in self.cartTable.rows]
+            self.cartTotal = sum([price for (prodId, name, price) in self.cart])
 
         if self.logoutButton.clicked:
             self.onLogoutButtonClickEvent()
@@ -172,7 +172,7 @@ class MerchantPortalMode(PortalMode):
         self.inventoryTable = Table(25, 150, 600, 3, name='Inventory')
         # add the items to the table
         for item in self.inventory:
-            self.inventoryTable.addRow(item['item_name'], item["item_price"], mode='Add')
+            self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], mode='Add')
 
         # close window pane
         self.editingInventory = False
@@ -217,6 +217,9 @@ class MerchantPortalMode(PortalMode):
         else:
             self.data.sql.transferMoney(transactionCustId, user.id, self.cartTotal)
             self.transactionFailed = False
+
+            # add transaction info to database
+            self.data.sql.logTransaction(transactionCustId, user.id, self.cartTotal, self.cart)
             
             # once transaction is done, reset cart
             self.cart = []
