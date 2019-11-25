@@ -58,6 +58,12 @@ class MerchantPortalMode(PortalMode):
                                   self.width/2+160,
                                   name='Submit')
 
+        # show suggested items button
+        self.suggestedProductsButton = LightButton(self.width-350, 575,
+                                                   self.width-25,
+                                                   name='Suggested Products')
+        self.inSuggestedProductsMode = False
+
 
     def mousePressed(self, event, data):  
         if self.modifyingMoney:
@@ -93,6 +99,10 @@ class MerchantPortalMode(PortalMode):
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-200<event.y<self.height/2+200):
                 self.editingInventory = False
+        elif self.inSuggestedProductsMode:
+            if not (self.width/2-300<event.x<self.width/2+300 and
+                    self.height/2-250<event.y<self.height/2+250):
+                self.inSuggestedProductsMode = False
         else:
             self.logoutButton.mousePressed(event)
             self.settingsButton.mousePressed(event)
@@ -101,6 +111,7 @@ class MerchantPortalMode(PortalMode):
             self.checkoutButton.mousePressed(event)
             self.addItemButton.mousePressed(event)
             self.removeItemButton.mousePressed(event)
+            self.suggestedProductsButton.mousePressed(event)
 
             # table mouse pressed for scrolling
             self.inventoryTable.mousePressed(event)
@@ -154,6 +165,12 @@ class MerchantPortalMode(PortalMode):
         if self.itemSubmitButton.clicked:
             self.itemSubmitButton.mouseReleased(event)
             self.onItemSubmitButtonClickEvent()
+        if self.suggestedProductsButton.clicked:
+            self.suggestedProductsButton.mouseReleased(event)
+            self.onSuggestedProductsButtonClickEvent()
+
+    def onSuggestedProductsButtonClickEvent(self):
+        self.inSuggestedProductsMode = True
 
     def onItemSubmitButtonClickEvent(self):
         itemName = self.itemNameInput.inputText
@@ -260,6 +277,7 @@ class MerchantPortalMode(PortalMode):
             self.checkoutButton.mouseReleased(event)
             self.addItemButton.mouseReleased(event)
             self.removeItemButton.mouseReleased(event)
+            self.suggestedProductsButton.mouseReleased(event)
 
             # row mouse released
             for row in self.inventoryTable.onScreen:
@@ -275,6 +293,11 @@ class MerchantPortalMode(PortalMode):
         if self.editingInventory:
             self.itemNameInput.keyPressed(event)
             self.itemPriceInput.keyPressed(event)
+
+    def drawSuggestedProductsPane(self, canvas):
+        canvas.create_image(0,0,image=self.tkTransparent)
+        canvas.create_rectangle(self.width/2-300, self.height/2-250, self.width/2+300, self.height/2+250, fill='#FFFFFF')
+        canvas.create_text(self.width/2-260, self.height/2-230, text="Suggested Products", anchor='nw', font='Helvetica 30')
 
     # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
     # with slight modifications
@@ -317,6 +340,7 @@ class MerchantPortalMode(PortalMode):
         self.checkoutButton.draw(canvas)
         self.addItemButton.draw(canvas)
         self.removeItemButton.draw(canvas)
+        self.suggestedProductsButton.draw(canvas)
 
         super().redrawAll(canvas, data)
 
@@ -327,3 +351,5 @@ class MerchantPortalMode(PortalMode):
             self.drawFaceCapturePane(canvas)
         elif self.editingInventory:
             self.drawInventoryEditPane(canvas)
+        elif self.inSuggestedProductsMode:
+            self.drawSuggestedProductsPane(canvas)
