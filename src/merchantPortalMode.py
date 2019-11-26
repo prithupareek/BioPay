@@ -13,7 +13,7 @@ class MerchantPortalMode(PortalMode):
         self.inventory = data.sql.getInventoryData(user.inventoryTableName)
 
         # make the inventory table
-        self.inventoryTable = Table(25, 150, 600, 3, name='Inventory')
+        self.inventoryTable = Table(25, 150, 600, rows=3, name='Inventory')
         # add the items to the table
         for item in self.inventory:
             self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], mode='Add')
@@ -23,7 +23,7 @@ class MerchantPortalMode(PortalMode):
         # self.onScreenCart = []
 
         # make table for cart (empty at first)
-        self.cartTable = Table(25, 375, 600, 3, name='Cart')
+        self.cartTable = Table(25, 375, 600, rows=3, name='Cart')
 
         # checkout button
         self.checkoutButton = DarkButton(self.width-350, 515,
@@ -36,7 +36,10 @@ class MerchantPortalMode(PortalMode):
                                   name='Capture')
 
         # used during checkout, set to none by default
-        self.transactionFailed = False
+        self.transactionFailed = None
+
+        # current transaction successsful customer
+        self.transCust = None
 
         # edit inventory buttons
         self.addItemButton = DarkButton(self.width-350, 395,
@@ -63,6 +66,10 @@ class MerchantPortalMode(PortalMode):
                                                    self.width-25,
                                                    name='Suggested Products')
         self.inSuggestedProductsMode = False
+        # suggested products table
+        self.suggestedProductsTable = Table(self.width/2-360, self.height/2-175, self.width/2+330, rows=6, name="Customer also bought")
+        # suggested products list
+        self.suggestedProducts = []
 
 
     def mousePressed(self, event, data):  
@@ -100,9 +107,18 @@ class MerchantPortalMode(PortalMode):
                     self.height/2-200<event.y<self.height/2+200):
                 self.editingInventory = False
         elif self.inSuggestedProductsMode:
-            if not (self.width/2-300<event.x<self.width/2+300 and
+            if not (self.width/2-400<event.x<self.width/2+400 and
                     self.height/2-250<event.y<self.height/2+250):
                 self.inSuggestedProductsMode = False
+
+            self.suggestedProductsTable.mousePressed(event)
+
+            # loop through inventory to check if button clicked, and then add to cart
+            for row in self.suggestedProductsTable.rows:
+                if row.button.clicked:
+                    # self.cart = [(row.name, row.price)] + self.cart[:]
+                    # self.cartTotal += self.cart[0][1]
+                    self.cartTable.addRow(row.prodId, row.name, row.price, mode='Remove')
         else:
             self.logoutButton.mousePressed(event)
             self.settingsButton.mousePressed(event)
@@ -130,8 +146,8 @@ class MerchantPortalMode(PortalMode):
                     self.cartTable.removeRow(row)
                     break
 
-            self.cart = [(row.prodId, row.name, row.price) for row in self.cartTable.rows]
-            self.cartTotal = sum([price for (prodId, name, price) in self.cart])
+        self.cart = [(row.prodId, row.name, row.price) for row in self.cartTable.rows]
+        self.cartTotal = sum([price for (prodId, name, price) in self.cart])
 
         if self.logoutButton.clicked:
             self.onLogoutButtonClickEvent()
@@ -172,6 +188,53 @@ class MerchantPortalMode(PortalMode):
     def onSuggestedProductsButtonClickEvent(self):
         self.inSuggestedProductsMode = True
 
+        # clear the suggested products table and list
+        self.suggestedProducts = []
+        self.suggestedProductsTable.clear()
+
+
+        suggestedItemsDict = dict()
+
+        # loop through all items in users cart
+        for custCartItem in self.cart:
+
+            # loop through all previous carts and check if the item is in that cart
+            for prevCart in user.previousCarts:
+
+                # if the previous carts contains the item, then loop through the cart and add items to a dictionary
+                if custCartItem[0] in prevCart:
+
+                    for prevCartItem in prevCart:
+
+                        if not prevCartItem in [itemId for (itemId, itemName, itemPrice) in self.cart]:
+                            suggestedItemsDict[prevCartItem] = suggestedItemsDict.get(prevCartItem, 0) + 1
+
+        # in the dictionary loop through keys and get the top 5 item ids
+        # this line sorts the dictionary based on the value of each item and returns a list of tuples (key, value)
+        # Found in pydocs: https://docs.python.org/3/library/functions.html#sorted
+        sortedDictList = sorted(suggestedItemsDict.items(), key= lambda item: item[1])[::-1]
+
+        # grab only the keys from the sorted list
+        sortedKeyList = [key for (key, count) in sortedDictList]
+        
+        # try getting the top 5 items, if less than five than return all items
+        try:
+            top = set(sortedKeyList[:5])
+
+        except:
+            top = set(sortedKeyList[:])
+
+        # add the items into the suggested products list, and table
+        # if a merchant is not longer selling a certain item, it will not be suggested
+        for item in self.inventory:
+
+            if item["item_id"] in top:
+
+                self.suggestedProducts.append(item)
+                self.suggestedProductsTable.addRow(item["item_id"], item['item_name'], item["item_price"], mode='Add')
+
+
+
     def onItemSubmitButtonClickEvent(self):
         itemName = self.itemNameInput.inputText
         itemPrice = self.itemPriceInput.inputText
@@ -186,7 +249,7 @@ class MerchantPortalMode(PortalMode):
         # update user inventory
         self.inventory = self.data.sql.getInventoryData(user.inventoryTableName)
         # make the inventory table
-        self.inventoryTable = Table(25, 150, 600, 3, name='Inventory')
+        self.inventoryTable.clear()
         # add the items to the table
         for item in self.inventory:
             self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], mode='Add')
@@ -237,11 +300,14 @@ class MerchantPortalMode(PortalMode):
 
             # add transaction info to database
             self.data.sql.logTransaction(transactionCustId, user.id, self.cartTotal, self.cart)
+
+            # get the customer name to display on the screen
+            self.transCust = self.data.sql.getUserNameById(transactionCustId)['user_firstName']
             
             # once transaction is done, reset cart
             self.cart = []
             self.cartTotal = 0
-            self.cartTable = Table(25, 375, 600, 3, name='Cart')
+            self.cartTable.clear()
 
 
         # close window
@@ -269,6 +335,8 @@ class MerchantPortalMode(PortalMode):
             self.captureImageButton.mouseReleased(event)
         elif self.editingInventory:
             self.itemSubmitButton.mouseReleased(event)
+        elif self.inSuggestedProductsMode:
+            self.suggestedProductsTable.mouseReleased(event)
         else:
             self.logoutButton.mouseReleased(event)
             self.settingsButton.mouseReleased(event)
@@ -296,8 +364,10 @@ class MerchantPortalMode(PortalMode):
 
     def drawSuggestedProductsPane(self, canvas):
         canvas.create_image(0,0,image=self.tkTransparent)
-        canvas.create_rectangle(self.width/2-300, self.height/2-250, self.width/2+300, self.height/2+250, fill='#FFFFFF')
-        canvas.create_text(self.width/2-260, self.height/2-230, text="Suggested Products", anchor='nw', font='Helvetica 30')
+        canvas.create_rectangle(self.width/2-400, self.height/2-250, self.width/2+400, self.height/2+250, fill='#FFFFFF')
+        canvas.create_text(self.width/2-360, self.height/2-230, text="Suggested Products", anchor='nw', font='Helvetica 30')
+
+        self.suggestedProductsTable.draw(canvas)
 
     # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
     # with slight modifications
@@ -344,8 +414,10 @@ class MerchantPortalMode(PortalMode):
 
         super().redrawAll(canvas, data)
 
-        if self.transactionFailed:
+        if self.transactionFailed == True:
             canvas.create_text(300, 600, text="Transaction Failed. Try again.", anchor='nw', font='Helvetic 16', fill='red')
+        elif self.transactionFailed == False:
+            canvas.create_text(300, 600, text=f"Thank you, {self.transCust}", anchor='nw', font='Helvetic 16', fill='green')
 
         if self.checkingOut:
             self.drawFaceCapturePane(canvas)

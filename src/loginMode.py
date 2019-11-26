@@ -77,6 +77,9 @@ class LoginMode(Mode):
                 # get the face encodings for all the customers
                 user.allFaceEncodings = self.data.sql.getFaceEncodings()
 
+                # get all the previous carts
+                user.previousCarts = self.data.sql.getPreviousCarts(user.id)
+
     def mouseReleased(self, event, data):
         self.loginButton.mouseReleased(event)
         self.createAccountButton.mouseReleased(event)

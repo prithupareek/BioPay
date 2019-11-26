@@ -49,6 +49,17 @@ class SQLConnection(object):
 
         return result
 
+    def getUserNameById(self, userid):
+        with self.connection.cursor() as cursor:
+
+            sql = f"SELECT `user_firstName` FROM `user_info` WHERE `user_id`='{userid}'"
+            cursor.execute(sql)
+            result = cursor.fetchone()
+
+        self.connection.commit()
+
+        return result
+
     def updateAccountBalance(self, userid):
         with self.connection.cursor() as cursor:
 
@@ -231,13 +242,40 @@ class SQLConnection(object):
                 cursor.execute(addToCartSql)
 
             # add the cart tablename to the transaction history table
-            addCartNameSql = f"UPDATE `transaction_history` SET `item_list`='cart_{transId}';"
+            addCartNameSql = f"UPDATE `transaction_history` SET `item_list`='cart_{transId}' WHERE `trans_id` = {transId};"
             cursor.execute(addCartNameSql)
 
 
         self.connection.commit()
 
         return result
+
+    def getPreviousCarts(self, userid):
+        with self.connection.cursor() as cursor:
+
+            listOfCarts = []
+
+            getItemListNamesSql = f"SELECT `item_list` FROM `transaction_history`"
+            cursor.execute(getItemListNamesSql)
+            getItemListNamesSqlResult = cursor.fetchall()
+
+            # for each cart table name
+            for cart in getItemListNamesSqlResult:
+
+                # get the cart table, but only the ids
+                getCartTableSql = f"SELECT `item_id` FROM `{cart['item_list']}`"
+                getCartTableSqlResult = cursor.execute(getCartTableSql)
+                getCartTableSqlResult = cursor.fetchall()
+
+                # convert dict to set
+                cartSet = set([list(item.values())[0] for item in getCartTableSqlResult])
+
+                # add the set to listOfCarts
+                listOfCarts.append(cartSet)
+
+        self.connection.commit()
+
+        return listOfCarts
 
     def closeConn(self):
         self.connection.close()

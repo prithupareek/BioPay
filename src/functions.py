@@ -211,6 +211,9 @@ class Table(object):
     def removeRow(self, row):
         self.rows.remove(row)
 
+    def clear(self):
+        self.rows = []
+
     def draw(self, canvas):
         canvas.create_text(self.x0, self.y0, text=self.name, font='Helvetica 24', anchor='nw')
         canvas.create_rectangle(self.x0, self.y0+30, self.x1, self.y1+30, outline=GRAY_COLOR, width=1, fill='#FFFFFF')
