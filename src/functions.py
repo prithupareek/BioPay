@@ -243,24 +243,29 @@ class TableRow(object):
         self.price = price
         self.mode = mode
         self.prodId = prodID
-        self.button = DarkButton(2*(x1-x0)//3 + self.x0, y0+10, 2*(x1-x0)//3 + self.x0+175, mode)
+        if mode != 'noButton':
+            self.button = DarkButton(2*(x1-x0)//3 + self.x0, y0+10, 2*(x1-x0)//3 + self.x0+175, mode)
 
     def updateYPos(self, newY0):
         self.y0 = newY0
         self.y1 = newY0 + 60
-        self.button.y0 = newY0 + 10
-        self.button.y1 = self.button.y0 + 40
+        if self.mode != 'noButton':
+            self.button.y0 = newY0 + 10
+            self.button.y1 = self.button.y0 + 40
 
     def mousePressed(self, event):
-        self.button.mousePressed(event)
+        if self.mode != 'noButton':
+            self.button.mousePressed(event)
 
     def mouseReleased(self, event):
-        self.button.mouseReleased(event)
+        if self.mode != 'noButton':
+            self.button.mouseReleased(event)
 
     def draw(self, canvas):
         canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, outline=GRAY_COLOR, width=1, fill='#FFFFFF')
         canvas.create_text(self.x0+25, (self.y1-self.y0)/2+self.y0, text=self.name, font='Helvetica 24', fill='#000000', anchor='w')
         canvas.create_text((self.x1-self.x0)//3 + self.x0 +25, (self.y1-self.y0)/2+self.y0, text="$"+str(self.price), font='Helvetica 24', fill='#000000', anchor='w')
-        self.button.draw(canvas)
+        if self.mode != 'noButton':
+            self.button.draw(canvas)
 
 

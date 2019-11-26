@@ -26,6 +26,18 @@ class CustomerPortalMode(PortalMode):
                                   self.width/2+160,
                                   name='Capture')
 
+        # make the transaction history table
+        self.transactionTable = Table(25, 150, 600, rows=8, name='Transaction History')
+        
+        # get the transaction made by the user
+        self.transactions = data.sql.getTransactionHistory(user.id)
+        for item in self.transactions:
+            transId = item['trans_id']
+            transPrice = item['trans_amount']
+            merchName = data.sql.getUserNameById(item['recipient_id'])['user_firstName']
+            self.transactionTable.addRow(transId, merchName, transPrice, mode='noButton')
+        
+
     def mousePressed(self, event, data):  
         if self.modifyingMoney:
             self.moneyInput.mousePressed(event)
@@ -58,6 +70,8 @@ class CustomerPortalMode(PortalMode):
             self.addMoneyButton.mousePressed(event)
             self.removeMoneyButton.mousePressed(event)
             self.changeFaceButton.mousePressed(event)
+
+            self.transactionTable.mousePressed(event)
 
         if self.logoutButton.clicked:
             self.onLogoutButtonClickEvent()
@@ -147,6 +161,8 @@ class CustomerPortalMode(PortalMode):
             self.removeMoneyButton.mouseReleased(event)
             self.changeFaceButton.mouseReleased(event)
 
+            self.transactionTable.mouseReleased(event)
+
     # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
     # with slight modifications
     def drawCamera(self, canvas, data):
@@ -175,6 +191,9 @@ class CustomerPortalMode(PortalMode):
         if user.face != None:
             # userface image
             canvas.create_image(self.width-187, 455, image=self.tkUserImage)
+
+        # draw trans history table
+        self.transactionTable.draw(canvas)
 
         super().redrawAll(canvas, data)
 
