@@ -8,9 +8,12 @@ from createAccountMode import *
 
 class LoginMode(Mode):
     def __init__(self, data):
+        # screen dims
         self.width = data.width
         self.height = data.height
         self.data = data
+
+        # user input boxes
         self.usernameBox = InputBox(self.width/2-160, self.height/2-60,
         	   						self.width/2+160,
         	   						name='Username')
@@ -23,8 +26,11 @@ class LoginMode(Mode):
         self.createAccountButton = LightButton(self.width/2-160, self.height/2+130,
                                   self.width/2+160,
                                   name='Create Account')
+
+        # used to print error message if invalid creds
         self.invalidCredentials = False
 
+        # loads the logo, and makes it a tkimage
         self.logo = Image.open('images/logo.png')
         self.logo = scaleImage(self.logo, 0.25, antialias=True)
         self.tkLogo = ImageTk.PhotoImage(self.logo)
@@ -51,6 +57,8 @@ class LoginMode(Mode):
         sqlUser='root'
         password='[3#1/r>(e}UI6;Q'
         db='biometric_payment_database'
+
+        # make the sql call, and save the result
         self.data.sql = SQLConnection(host, sqlUser, password, db)
         currUser = self.data.sql.login(self.usernameBox.inputText, self.passwordBox.inputText)
         if currUser == None:
@@ -67,6 +75,7 @@ class LoginMode(Mode):
             user.inventoryTableName = currUser['user_inventory']
             user.faceEncoding = currUser['user_face_encoding']
 
+            # go the the correct portal depending on the type or user
             if user.type == 'C':
                 self.data.customerPortalMode = CustomerPortalMode(self.data)
                 self.data.activeMode=self.data.customerPortalMode
@@ -84,11 +93,6 @@ class LoginMode(Mode):
         self.loginButton.mouseReleased(event)
         self.createAccountButton.mouseReleased(event)
 
-    def timerFired(self, data):
-        # self.usernameBox.timerFired()
-        # self.passwordBox.timerFired()
-        pass
-
     def keyPressed(self, event, data):
         self.usernameBox.keyPressed(event)
         self.passwordBox.keyPressed(event)
@@ -102,6 +106,7 @@ class LoginMode(Mode):
         self.loginButton.draw(canvas)
         self.createAccountButton.draw(canvas)
 
+        # draw error msg if invalid usr
         if self.invalidCredentials:
             canvas.create_text(self.width/2, self.height/2+190, text="Incorrect username or password.", font='Helvetica 16', fill='red')
 

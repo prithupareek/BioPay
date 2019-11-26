@@ -63,3 +63,28 @@ Project Proposal
   - OpenCV
   - face_recognition
   - Pymysql
+
+------------------------------------
+
+TP2 Updates
+
+- Changes made to the file structures as the orignial one was tentative
+
+Current File Structure:
+src:
+-createAccountMode.py (inherits from Mode)
+-customerPortalMode.py (inherits from PortalMode)
+-functions.py
+-loginMode.py (inherits from Mode)
+-main.py (main file) (depends on all the other files to work)
+-merchantPortalMode.py (inherits from PortalMode)
+-mode.py
+-portalMode.py (inherits from Mode)
+-splashScreenMode.py (inherits from Mode)
+-sql.py
+-userData.py
+
+- Feature change:
+  - No price optimization or web scrapping
+  - instead will create some sort of visualizer for the mercant to view profit/losses and customer to view income/spending (graph)
+  - will also try to make the python program into and executable file

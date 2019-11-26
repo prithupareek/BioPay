@@ -71,42 +71,51 @@ class MerchantPortalMode(PortalMode):
         # suggested products list
         self.suggestedProducts = []
 
-
+    # mouse pressed eventss
     def mousePressed(self, event, data):  
         if self.modifyingMoney:
             self.moneyInput.mousePressed(event)
             self.submitMoneyButton.mousePressed(event)
 
+            # close pane if click off of it
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-80<event.y<self.height/2+80):
                 self.modifyingMoney = False
+
         elif self.inSettingsMode:
             self.submitSettingButton.mousePressed(event)
             self.usernameBox.mousePressed(event)
             self.passwordBox.mousePressed(event)
             self.nameBox.mousePressed(event)
 
+            # close pane if click off it it
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-200<event.y<self.height/2+200):
                 self.inSettingsMode = False
+
         elif self.checkingOut:
             self.captureImageButton.mousePressed(event)
 
+            # close pane if click off of it
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-200<event.y<self.height/2+200):
                 self.checkingOut = False
                 print("Releasing camera!")
                 self.data.camera.release()
                 self.data.cameraOn = False
+
         elif self.editingInventory:
             self.itemSubmitButton.mousePressed(event)
             self.itemNameInput.mousePressed(event)
             self.itemPriceInput.mousePressed(event)
 
+            # close pane if click off of it
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-200<event.y<self.height/2+200):
                 self.editingInventory = False
+
         elif self.inSuggestedProductsMode:
+            # close pane if clicik off of it
             if not (self.width/2-400<event.x<self.width/2+400 and
                     self.height/2-250<event.y<self.height/2+250):
                 self.inSuggestedProductsMode = False
@@ -146,6 +155,7 @@ class MerchantPortalMode(PortalMode):
                     self.cartTable.removeRow(row)
                     break
 
+        # set the cart to the items in the table rows, and update the cart toatal
         self.cart = [(row.prodId, row.name, row.price) for row in self.cartTable.rows]
         self.cartTotal = sum([price for (prodId, name, price) in self.cart])
 
@@ -153,10 +163,10 @@ class MerchantPortalMode(PortalMode):
             self.onLogoutButtonClickEvent()
         if self.addMoneyButton.clicked:
             self.addMoneyButton.mouseReleased(event)
-            self.onMoneyClickEvent(1)
+            self.onMoneyClickEvent(1) # add $
         if self.removeMoneyButton.clicked:
             self.removeMoneyButton.mouseReleased(event)
-            self.onMoneyClickEvent(-1)
+            self.onMoneyClickEvent(-1) #remove $
         if self.submitMoneyButton.clicked:
             self.submitMoneyButton.mouseReleased(event)
             self.onSubmitMoneyClick()
@@ -174,10 +184,10 @@ class MerchantPortalMode(PortalMode):
             self.onCaptureImageButtonClickEvent()
         if self.addItemButton.clicked:
             self.addItemButton.mouseReleased(event)
-            self.onInventoryModifyButtonClickEvent(+1)
+            self.onInventoryModifyButtonClickEvent(+1) #add item
         if self.removeItemButton.clicked:
             self.removeItemButton.mouseReleased(event)
-            self.onInventoryModifyButtonClickEvent(-1)
+            self.onInventoryModifyButtonClickEvent(-1) #remove item
         if self.itemSubmitButton.clicked:
             self.itemSubmitButton.mouseReleased(event)
             self.onItemSubmitButtonClickEvent()
@@ -185,6 +195,7 @@ class MerchantPortalMode(PortalMode):
             self.suggestedProductsButton.mouseReleased(event)
             self.onSuggestedProductsButtonClickEvent()
 
+    # get a list of suggested products for a user based on cart, and add it to a table
     def onSuggestedProductsButtonClickEvent(self):
         self.inSuggestedProductsMode = True
 
@@ -217,9 +228,9 @@ class MerchantPortalMode(PortalMode):
         # grab only the keys from the sorted list
         sortedKeyList = [key for (key, count) in sortedDictList]
         
-        # try getting the top 5 items, if less than five than return all items
+        # try getting the top 8 items, if less than five than return all items
         try:
-            top = set(sortedKeyList[:5])
+            top = set(sortedKeyList[:8])
 
         except:
             top = set(sortedKeyList[:])
@@ -234,7 +245,7 @@ class MerchantPortalMode(PortalMode):
                 self.suggestedProductsTable.addRow(item["item_id"], item['item_name'], item["item_price"], mode='Add')
 
 
-
+    # add/remove an item from the inventory
     def onItemSubmitButtonClickEvent(self):
         itemName = self.itemNameInput.inputText
         itemPrice = self.itemPriceInput.inputText
@@ -258,7 +269,7 @@ class MerchantPortalMode(PortalMode):
         self.editingInventory = False
         self.itemNameInput.inputText = self.itemNameInput.name
         self.itemPriceInput.inputText = self.itemPriceInput.name
-
+    
     def onInventoryModifyButtonClickEvent(self, mode):
         self.editingInventory = True
         self.inventoryModifyMode = mode

@@ -1,8 +1,10 @@
 # Prithu Pareek - Created 11/19/19
 # Customer Portal Mode
+# Holds the class for the customer portal
 
 from portalMode import *
 
+# inherits from generic portal mode class
 class CustomerPortalMode(PortalMode):
     def __init__(self, data):
         super().__init__(data)
@@ -21,6 +23,7 @@ class CustomerPortalMode(PortalMode):
                                   self.width-25,
                                   name='Change Face')
         self.changingFace = False
+        
         # capture picture button
         self.captureImageButton = DarkButton(self.width/2-160, self.height/2+110,
                                   self.width/2+160,
@@ -37,15 +40,19 @@ class CustomerPortalMode(PortalMode):
             merchName = data.sql.getUserNameById(item['recipient_id'])['user_firstName']
             self.transactionTable.addRow(transId, merchName, transPrice, mode='noButton')
         
-
+    # mouse pressed event
     def mousePressed(self, event, data):  
+        # if adding or removing money, then only listen for events on that pane
         if self.modifyingMoney:
             self.moneyInput.mousePressed(event)
             self.submitMoneyButton.mousePressed(event)
 
+            # if you click off the pane, then close it, and return to the main portal mode
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-80<event.y<self.height/2+80):
                 self.modifyingMoney = False
+
+        # same idea as above but for settings
         elif self.inSettingsMode:
             self.submitSettingButton.mousePressed(event)
             self.usernameBox.mousePressed(event)
@@ -55,15 +62,20 @@ class CustomerPortalMode(PortalMode):
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-200<event.y<self.height/2+200):
                 self.inSettingsMode = False
+
+        # same idea as above but for updating the face picture stored in the data base
         elif self.changingFace:
             self.captureImageButton.mousePressed(event)
 
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-200<event.y<self.height/2+200):
                 self.changingFace = False
-                print("Releasing camera!")
+
+                # turn off the camera when you close this pane
                 self.data.camera.release()
                 self.data.cameraOn = False
+
+        # listen for other button clicks in the main portal mode
         else:
             self.logoutButton.mousePressed(event)
             self.settingsButton.mousePressed(event)
@@ -73,14 +85,15 @@ class CustomerPortalMode(PortalMode):
 
             self.transactionTable.mousePressed(event)
 
+        # if a button is clicked, then call its respective function
         if self.logoutButton.clicked:
             self.onLogoutButtonClickEvent()
         if self.addMoneyButton.clicked:
             self.addMoneyButton.mouseReleased(event)
-            self.onMoneyClickEvent(1)
+            self.onMoneyClickEvent(1) #addin money
         if self.removeMoneyButton.clicked:
             self.removeMoneyButton.mouseReleased(event)
-            self.onMoneyClickEvent(-1)
+            self.onMoneyClickEvent(-1) #subtracting money
         if self.submitMoneyButton.clicked:
             self.submitMoneyButton.mouseReleased(event)
             self.onSubmitMoneyClick()
@@ -97,6 +110,7 @@ class CustomerPortalMode(PortalMode):
             self.captureImageButton.mouseReleased(event)
             self.onCaptureImageButtonClickEvent()
 
+    # takes picture and saves it to the database
     def onCaptureImageButtonClickEvent(self):
         # capture the image
         image = self.data.frame
@@ -107,8 +121,9 @@ class CustomerPortalMode(PortalMode):
 
         # convert to bytearray
         text = base64.b64encode(convertedImage)
-        print(type(text))
+        print(len(text))
         text = text.decode('utf-8')
+        print(len(text))
 
         # save to database
         self.data.sql.updateFaceImage(user.id, text)
@@ -136,6 +151,7 @@ class CustomerPortalMode(PortalMode):
         self.data.camera.release()
         self.data.cameraOn = False
 
+    # turns on teh camea, and opens displays the live feed on the screen
     def onChangeFaceButtonClickEvent(self):
         # turn on the webcam 
         # From https://github.com/VasuAgrawal/112-opencv-tutorial/blob/master/opencvTkinterTemplate.py
@@ -147,6 +163,7 @@ class CustomerPortalMode(PortalMode):
         # _, self.data.frame = self.data.camera.read()
         self.changingFace = True
 
+    # mouse released events, different based on what state of the UI you are in
     def mouseReleased(self, event, data):
         if self.modifyingMoney:
             self.submitMoneyButton.mouseReleased(event)
@@ -173,6 +190,7 @@ class CustomerPortalMode(PortalMode):
 
     # TODO: Fix exact UI Pixel stuff
     def drawFaceCapturePane(self, canvas):
+        # the transparent image is used because there is no opacity for tkinter
         canvas.create_image(0,0,image=self.tkTransparent)
         canvas.create_rectangle(self.width/2-200, self.height/2-160, self.width/2+200, self.height/2+160, fill='#FFFFFF')
         canvas.create_text(self.width/2-160, self.height/2-140, text="Camera", anchor='nw', font='Helvetica 30')

@@ -32,6 +32,7 @@ def scaleImage(image, scale, antialias=False):
 # need to add ability to have alphanumeric charecters as well
 class InputBox(object):
 
+    # event.keysm returns the name of the symbol, so this dictionary holds the conversions
     symbolDict = {
                     'exclam': '!', 'at': '@', 'numbersign':'#', 'dollar':'$', 'percent':'%', 'asciicircum':'^', 'ampersand':'&',
                     'asterisk':'*', 'parenleft':'(', 'parenright':')', 'minus':'-', 'underscore':'_', 'plus':'+', 'equal':'=',
@@ -46,19 +47,22 @@ class InputBox(object):
         self.outlineColor = '#000000'
         (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x1, y0+40)
         self.name = self.inputText = name
-        # self.maxInputLen = math.floor((self.x1-self.x0)/12.5)
         self.maxInputLen = 16
         self.hidden=hidden
 
     # if you click on the textBox, then make the outline thick and if you haven't typed, clear the text
     def mousePressed(self, event):
+        # if you click on the box, it goes into active mode so the user knows what box they are typing in
         if (self.x0 < event.x < self.x1 and
             self.y0 < event.y < self.y1):
             self.clicked = True
             self.outlineWidth = 3
             self.outlineColor = MAIN_COLOR
+
+            # makes the box empty when you click on it for the first time so you don't have to delete the filler text
             if self.inputText == self.name:
                 self.inputText = ''
+
         # reset if click off the box
         else:
             self.clicked = False
@@ -72,11 +76,16 @@ class InputBox(object):
         if self.clicked:
 
             key = event.keysym
+
+            # translate symbol name into actual symbol
             if key in InputBox.symbolDict:
                 key = InputBox.symbolDict[key]
 
+            # lets you delete charecters
             if key == 'BackSpace':
                 self.inputText = self.inputText[:-1]
+
+            # regular letters
             elif (key in string.ascii_letters or string.digits) and len(key)==1 and len(self.inputText)<self.maxInputLen:
                 self.inputText += key
 
@@ -103,25 +112,30 @@ class Button(object):
         self.textColor = '#FFFFFF'
         self.outline = 0
 
+    # set self.clicked to true if the button is clicked, and turn the button darker to indicate to the user that it was clicked
     def mousePressed(self, event):
         if (self.x0 < event.x < self.x1 and
             self.y0 < event.y < self.y1):
             self.clicked = True
             self.fillColor = self.clickedColor
 
+    # on mouserelase click is false again, and the color is normal
     def mouseReleased(self, event):
         if (self.x0 < event.x < self.x1 and
             self.y0 < event.y < self.y1):
             self.clicked = False
             self.fillColor = self.startColor
 
+    # draw the button
     def draw(self, canvas):
         canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, fill=self.fillColor, width=self.outline, outline=GRAY_COLOR)
         canvas.create_text((self.x1-self.x0)/2+self.x0, (self.y1-self.y0)/2+self.y0, text=self.name, font='Helvetica 32', fill=self.textColor)
 
+# Dark button inherits from button
 class DarkButton(Button):
     pass
 
+# inherits from button, same thing, but with different color scheme
 class LightButton(Button):
     def __init__(self, x0, y0, x1, name):
         super().__init__(x0, y0, x1, name)
@@ -138,6 +152,8 @@ class ToggleButton(Button):
         self.name1 = name
         self.name2 = alternativeName
 
+    # changes the name and color based on the click
+    # the name of the button is used to determine what state the button is in when the button is used in the app
     def mousePressed(self, event):
         if (self.x0 < event.x < self.x1 and
             self.y0 < event.y < self.y1):
@@ -153,7 +169,7 @@ class ToggleButton(Button):
     def mouseReleased(self, event):
         pass
 
-# scroll button
+# scroll button, used in the table class, different size/shape
 class ScrollButton(Button):
     def __init__(self, x0, y0, name):
         super().__init__(x0, y0, x0+10, name)
@@ -168,18 +184,19 @@ class ScrollButton(Button):
 class Table(object):
     def __init__(self, x0, y0, x1, rows, name):
         (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x1, y0+60*rows)
-        self.numRows = rows
-        self.rows = []
+        self.numRows = rows #num of visible rows
+        self.rows = [] #holds each row
         self.name = name
         self.scroll = 0
         self.scrollUpButton = ScrollButton(x1+5, (self.y1-self.y0)//3+self.y0+30, name=u"\u25B2")
         self.scrollDownButton = ScrollButton(x1+5, 2*(self.y1-self.y0)//3 + self.y0+30, name=u"\u25BC")
-        self.onScreen = []
+        self.onScreen = [] #rows that are currently visible on screen
 
     def mousePressed(self, event):
         self.scrollUpButton.mousePressed(event)
         self.scrollDownButton.mousePressed(event)
 
+        # self.scroll is used to control what is visible on screen
         if self.scrollUpButton.clicked and self.scroll+self.numRows < len(self.rows):
             self.scroll += 1
         elif self.scrollDownButton.clicked and self.scroll > 0:
@@ -211,6 +228,7 @@ class Table(object):
     def removeRow(self, row):
         self.rows.remove(row)
 
+    # remove all rows from the table
     def clear(self):
         self.rows = []
 
@@ -241,7 +259,7 @@ class TableRow(object):
         (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x1, y0+60)
         self.name = name
         self.price = price
-        self.mode = mode
+        self.mode = mode # add, remove, noButton
         self.prodId = prodID
         if mode != 'noButton':
             self.button = DarkButton(2*(x1-x0)//3 + self.x0, y0+10, 2*(x1-x0)//3 + self.x0+175, mode)
