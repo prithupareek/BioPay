@@ -21,6 +21,7 @@ from merchantPortalMode import *
 # main app object
 class App(object):
     # __init__ and appsStarted get called once when app is called
+    # sample change
     def __init__(self, width, height):
         self.run(width, height)
         self.data = None
