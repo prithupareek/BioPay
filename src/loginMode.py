@@ -60,7 +60,7 @@ class LoginMode(Mode):
 
         # make the sql call, and save the result
         self.data.sql = SQLConnection(host, sqlUser, password, db)
-        currUser = self.data.sql.login(self.usernameBox.inputText, self.passwordBox.inputText)
+        currUser = self.data.sql.login(self.usernameBox.inputText, sha1.hash(self.passwordBox.inputText))
         if currUser == None:
             self.invalidCredentials = True
         else:

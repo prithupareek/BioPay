@@ -10,6 +10,7 @@ from userData import *
 import cv2
 import face_recognition
 import numpy as np
+import sha1
 
 class Mode(object):
     def __init__(self): pass

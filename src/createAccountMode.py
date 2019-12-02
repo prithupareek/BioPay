@@ -73,7 +73,7 @@ class CreateAccountMode(Mode):
         self.userAlreadyExists = False
 
         # make the sql call
-        currUser = self.data.sql.createAccount(self.usernameBox.inputText, self.passwordBox.inputText, 
+        currUser = self.data.sql.createAccount(self.usernameBox.inputText, sha1.hash(self.passwordBox.inputText), 
                                                self.nameBox.inputText, self.accountTypeButton.name[0])
 
         # grab user data from return of sql call
