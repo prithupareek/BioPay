@@ -222,8 +222,8 @@ class Table(object):
         for i in range(start, end):
             self.rows[i].mouseReleased(event)
 
-    def addRow(self, prodID, name, price, mode):
-          self.rows.insert(0, TableRow(self.x0, self.y0+30+60*len(self.rows), self.x1, name, price, mode, prodID))
+    def addRow(self, prodID, name, price, qty, mode):
+          self.rows.insert(0, TableRow(self.x0, self.y0+30+60*len(self.rows), self.x1, name, price, mode, prodID, qty))
 
     def removeRow(self, row):
         self.rows.remove(row)
@@ -255,14 +255,19 @@ class Table(object):
 
 # TableRow class
 class TableRow(object):
-    def __init__(self, x0, y0, x1, name, price, mode, prodID):
+    def __init__(self, x0, y0, x1, name, price, mode, prodID, qty):
         (self.x0, self.y0, self.x1, self.y1) = (x0, y0, x1, y0+60)
         self.name = name
         self.price = price
         self.mode = mode # add, remove, noButton
         self.prodId = prodID
+        self.qty = qty
         if mode != 'noButton':
-            self.button = DarkButton(2*(x1-x0)//3 + self.x0, y0+10, 2*(x1-x0)//3 + self.x0+175, mode)
+            if mode == 'Add':
+                buttonText = '+'
+            elif mode == 'Remove':
+                buttonText = '-'
+            self.button = DarkButton(2.6*(x1-x0)//3 + self.x0, y0+10, 2.8*(x1-x0)//3 + self.x0, buttonText)
 
     def updateYPos(self, newY0):
         self.y0 = newY0
@@ -283,6 +288,7 @@ class TableRow(object):
         canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, outline=GRAY_COLOR, width=1, fill='#FFFFFF')
         canvas.create_text(self.x0+25, (self.y1-self.y0)/2+self.y0, text=self.name, font='Helvetica 24', fill='#000000', anchor='w')
         canvas.create_text((self.x1-self.x0)//3 + self.x0 +25, (self.y1-self.y0)/2+self.y0, text="$"+str(self.price), font='Helvetica 24', fill='#000000', anchor='w')
+        canvas.create_text(2*(self.x1-self.x0)//3 + self.x0, (self.y1-self.y0)/2+self.y0, text="Qty:"+str(self.qty), font='Helvetica 24', fill='#000000', anchor='w')
         if self.mode != 'noButton':
             self.button.draw(canvas)
 

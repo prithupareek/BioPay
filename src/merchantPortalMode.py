@@ -16,7 +16,7 @@ class MerchantPortalMode(PortalMode):
         self.inventoryTable = Table(25, 150, 600, rows=3, name='Inventory')
         # add the items to the table
         for item in self.inventory:
-            self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], mode='Add')
+            self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='Add')
 
         self.cart = []
         self.cartTotal = 0
@@ -57,6 +57,9 @@ class MerchantPortalMode(PortalMode):
         self.itemPriceInput = InputBox(self.width/2-160, self.height/2-20,
                                     self.width/2+160,
                                     name='Price')
+        self.itemQtyInput = InputBox(self.width/2-160, self.height/2+40,
+                                    self.width/2+160,
+                                    name='Qty')
         self.itemSubmitButton = DarkButton(self.width/2-160, self.height/2+100,
                                   self.width/2+160,
                                   name='Submit')
@@ -108,6 +111,7 @@ class MerchantPortalMode(PortalMode):
             self.itemSubmitButton.mousePressed(event)
             self.itemNameInput.mousePressed(event)
             self.itemPriceInput.mousePressed(event)
+            self.itemQtyInput.mousePressed(event)
 
             # close pane if click off of it
             if not (self.width/2-200<event.x<self.width/2+200 and
@@ -125,9 +129,27 @@ class MerchantPortalMode(PortalMode):
             # loop through inventory to check if button clicked, and then add to cart
             for row in self.suggestedProductsTable.rows:
                 if row.button.clicked:
-                    # self.cart = [(row.name, row.price)] + self.cart[:]
-                    # self.cartTotal += self.cart[0][1]
-                    self.cartTable.addRow(row.prodId, row.name, row.price, mode='Remove')
+                    
+                    # if there is enough inventory
+                    if row.qty > 0:
+                        # if item already in cart, then add to quantity
+                        if any(row.prodId in i for i in self.cart):
+
+                            for item in self.cartTable.rows:
+                                if item.prodId == row.prodId:
+                                    item.qty += 1
+                        else:
+                            self.cartTable.addRow(row.prodId, row.name, row.price, mode='Remove', qty=1)
+
+                        # subtract 1 from suggested products ammount
+                        row.qty -= 1
+
+                        # subtract 1 from the inventory ammount
+                        for item in self.inventoryTable.rows:
+                            if item.prodId == row.prodId:
+                                item.qty -= 1
+
+                        break
         else:
             self.logoutButton.mousePressed(event)
             self.settingsButton.mousePressed(event)
@@ -145,19 +167,41 @@ class MerchantPortalMode(PortalMode):
             # loop through inventory to check if button clicked, and then add to cart
             for row in self.inventoryTable.rows:
                 if row.button.clicked:
-                    # self.cart = [(row.name, row.price)] + self.cart[:]
-                    # self.cartTotal += self.cart[0][1]
-                    self.cartTable.addRow(row.prodId, row.name, row.price, mode='Remove')
+                    
+                    # if there is enough inventory
+                    if row.qty > 0:
+                        # if item already in cart, then add to quantity
+                        if any(row.prodId in i for i in self.cart):
+
+                            for item in self.cartTable.rows:
+                                if item.prodId == row.prodId:
+                                    item.qty += 1
+                        else:
+                            self.cartTable.addRow(row.prodId, row.name, row.price, mode='Remove', qty=1)
+
+                        # subtract 1 from inventory ammount
+                        row.qty -= 1
+                        break
 
             # loop through the cart rows to check if button clicked, and then remove from cart
             for row in self.cartTable.rows:
                 if row.button.clicked:
-                    self.cartTable.removeRow(row)
+                    # if qty > 1 then subt 1 from qty
+                    if row.qty > 1:
+                        row.qty -= 1
+                    else:
+                        self.cartTable.removeRow(row)
+
+                    # add the item back to the inventory
+                    for item in self.inventoryTable.rows:
+                        if item.prodId == row.prodId:
+                            item.qty += 1
+
                     break
 
         # set the cart to the items in the table rows, and update the cart toatal
-        self.cart = [(row.prodId, row.name, row.price) for row in self.cartTable.rows]
-        self.cartTotal = sum([price for (prodId, name, price) in self.cart])
+        self.cart = [(row.prodId, row.name, row.price, row.qty) for row in self.cartTable.rows]
+        self.cartTotal = sum([price*qty for (prodId, name, price, qty) in self.cart])
 
         if self.logoutButton.clicked:
             self.onLogoutButtonClickEvent()
@@ -217,7 +261,7 @@ class MerchantPortalMode(PortalMode):
 
                     for prevCartItem in prevCart:
 
-                        if not prevCartItem in [itemId for (itemId, itemName, itemPrice) in self.cart]:
+                        if not prevCartItem in [itemId for (itemId, itemName, itemPrice, itemQty) in self.cart]:
                             suggestedItemsDict[prevCartItem] = suggestedItemsDict.get(prevCartItem, 0) + 1
 
         # in the dictionary loop through keys and get the top 5 item ids
@@ -242,17 +286,30 @@ class MerchantPortalMode(PortalMode):
             if item["item_id"] in top:
 
                 self.suggestedProducts.append(item)
-                self.suggestedProductsTable.addRow(item["item_id"], item['item_name'], item["item_price"], mode='Add')
+                self.suggestedProductsTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='Add')
 
 
     # add/remove an item from the inventory
     def onItemSubmitButtonClickEvent(self):
         itemName = self.itemNameInput.inputText
         itemPrice = self.itemPriceInput.inputText
+        
 
         # if adding item
         if self.inventoryModifyMode == 1:
-            self.data.sql.addItemToInventory(user.inventoryTableName, itemName, itemPrice)
+
+            itemQty = self.itemQtyInput.inputText
+            itemCost = Decimal(itemPrice)/4
+
+            # if item already in inventory
+            if (itemName, Decimal(itemPrice)) in [(row.name, row.price) for row in self.inventoryTable.rows]:
+                self.data.sql.updateItemQty(user.inventoryTableName, itemName, itemPrice, itemQty)
+            else:
+                self.data.sql.addItemToInventory(user.inventoryTableName, itemName, itemPrice, itemQty, itemCost)
+
+            # charge the merchant for the items
+            user.balance -= int(itemQty)*itemCost
+            self.data.sql.modifyAccountBalance(user.id, user.balance)
         # removing item
         elif self.inventoryModifyMode == -1:
             self.data.sql.removeItemFromInventory(user.inventoryTableName, itemName, itemPrice)
@@ -263,12 +320,13 @@ class MerchantPortalMode(PortalMode):
         self.inventoryTable.clear()
         # add the items to the table
         for item in self.inventory:
-            self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], mode='Add')
+            self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='Add')
 
         # close window pane
         self.editingInventory = False
         self.itemNameInput.inputText = self.itemNameInput.name
         self.itemPriceInput.inputText = self.itemPriceInput.name
+        self.itemQtyInput.inputText = self.itemQtyInput.name
     
     def onInventoryModifyButtonClickEvent(self, mode):
         self.editingInventory = True
@@ -372,6 +430,7 @@ class MerchantPortalMode(PortalMode):
         if self.editingInventory:
             self.itemNameInput.keyPressed(event)
             self.itemPriceInput.keyPressed(event)
+            self.itemQtyInput.keyPressed(event)
 
     def drawSuggestedProductsPane(self, canvas):
         canvas.create_image(0,0,image=self.tkTransparent)
@@ -407,6 +466,9 @@ class MerchantPortalMode(PortalMode):
         self.itemSubmitButton.draw(canvas)
         self.itemNameInput.draw(canvas)
         self.itemPriceInput.draw(canvas)
+
+        if self.inventoryModifyMode == 1:
+            self.itemQtyInput.draw(canvas)
 
     def redrawAll(self, canvas, data):
 

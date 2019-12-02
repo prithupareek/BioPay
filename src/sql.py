@@ -190,16 +190,28 @@ class SQLConnection(object):
 
         return result
 
-    def addItemToInventory(self, inventoryTableName, itemName, itemPrice):
+    def addItemToInventory(self, inventoryTableName, itemName, itemPrice, itemQty, itemCost):
         with self.connection.cursor() as cursor:
 
-            sql = f"INSERT INTO `{inventoryTableName}`(`item_name`, `item_price`) VALUES ('{itemName}',{itemPrice})"
+            sql = f"INSERT INTO `{inventoryTableName}`(`item_name`, `item_price`, `item_qty`, `item_cost`) VALUES ('{itemName}',{itemPrice}, {itemQty}, {itemCost})"
             cursor.execute(sql)
             result = cursor.fetchall()
 
         self.connection.commit()
 
         return result
+
+    def updateItemQty(self, inventoryTableName, itemName, itemPrice, itemQtyIncrease):
+        with self.connection.cursor() as cursor:
+
+            sql = f"UPDATE `{inventoryTableName}` SET `item_qty` = (SELECT `item_qty` WHERE `item_name`='{itemName}' AND `item_price`='{itemPrice}') + {itemQtyIncrease} WHERE `item_name`='{itemName}' AND `item_price`='{itemPrice}';"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+
+        self.connection.commit()
+
+        return result
+
 
     def removeItemFromInventory(self, inventoryTableName, itemName, itemPrice):
         with self.connection.cursor() as cursor:
