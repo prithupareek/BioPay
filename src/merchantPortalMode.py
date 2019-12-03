@@ -83,6 +83,10 @@ class MerchantPortalMode(PortalMode):
                                                    name='Analytics')
         self.viewingAnalytics = False
 
+        # used to avoid errors
+        self.faceError = False
+        self.notEnoughData = False
+
     # mouse pressed eventss
     def mousePressed(self, event, data):  
         if self.modifyingMoney:
@@ -166,6 +170,7 @@ class MerchantPortalMode(PortalMode):
             if not (self.width/2-400<event.x<self.width/2+400 and
                     self.height/2-250<event.y<self.height/2+250):
                 self.viewingAnalytics = False
+                self.notEnoughData = False
 
         else:
             self.logoutButton.mousePressed(event)
@@ -398,54 +403,61 @@ class MerchantPortalMode(PortalMode):
         # opencv stores images in BGR order, so first need to convert to rgb order
         # From https://github.com/ageitgey/face_recognition/issues/441
         rgbImage = image[:, :, ::-1]
-        myFaceEncoding = face_recognition.face_encodings(rgbImage)[0]
 
-        transactionCustId = None
+        try:
+            myFaceEncoding = face_recognition.face_encodings(rgbImage)[0]
 
-        # compare to other encodings and find a match
-        for customer in user.allFaceEncodings:
-            uid = customer['user_id']
-            b64Encoded = customer['user_face_encoding']
-            
-            if b64Encoded != None:
-                decoded = base64.b64decode(b64Encoded)
-                faceEncoding = np.fromstring(decoded, dtype=float)
+            self.faceError = False
 
-                faceCompare = face_recognition.compare_faces([faceEncoding], myFaceEncoding)
+            transactionCustId = None
 
-                if faceCompare[0] == True:
-                    transactionCustId = uid
-                    break
+            # compare to other encodings and find a match
+            for customer in user.allFaceEncodings:
+                uid = customer['user_id']
+                b64Encoded = customer['user_face_encoding']
+                
+                if b64Encoded != None:
+                    decoded = base64.b64decode(b64Encoded)
+                    faceEncoding = np.fromstring(decoded, dtype=float)
 
-        # complete transaction
-        # if no cust found
-        if transactionCustId == None:
-            self.transactionFailed = True
-        else:
-            self.data.sql.transferMoney(transactionCustId, user.id, self.cartTotal)
-            self.transactionFailed = False
+                    faceCompare = face_recognition.compare_faces([faceEncoding], myFaceEncoding)
 
-            # add transaction info to database
-            self.data.sql.logTransaction(transactionCustId, user.id, self.cartTotal, self.cart)
+                    if faceCompare[0] == True:
+                        transactionCustId = uid
+                        break
 
-            # get the customer name to display on the screen
-            self.transCust = self.data.sql.getUserNameById(transactionCustId)['user_firstName']
+            # complete transaction
+            # if no cust found
+            if transactionCustId == None:
+                self.transactionFailed = True
+            else:
+                self.data.sql.transferMoney(transactionCustId, user.id, self.cartTotal)
+                self.transactionFailed = False
 
-            # update the customers inventory quantities
-            for item in self.cartTable.rows:
-                self.data.sql.updateItemQty(user.inventoryTableName, item.name, item.price, -item.qty)
+                # add transaction info to database
+                self.data.sql.logTransaction(transactionCustId, user.id, self.cartTotal, self.cart)
 
-            
-            # once transaction is done, reset cart
-            self.cart = []
-            self.cartTotal = 0
-            self.cartTable.clear()
+                # get the customer name to display on the screen
+                self.transCust = self.data.sql.getUserNameById(transactionCustId)['user_firstName']
+
+                # update the customers inventory quantities
+                for item in self.cartTable.rows:
+                    self.data.sql.updateItemQty(user.inventoryTableName, item.name, item.price, -item.qty)
+
+                
+                # once transaction is done, reset cart
+                self.cart = []
+                self.cartTotal = 0
+                self.cartTable.clear()
 
 
-        # close window
-        self.checkingOut = False
-        self.data.camera.release()
-        self.data.cameraOn = False
+            # close window
+            self.checkingOut = False
+            self.data.camera.release()
+            self.data.cameraOn = False
+        except:
+            self.faceError = True
+
 
     def onCheckoutButtonClickEvent(self):
         # turn on the webcam 
@@ -541,7 +553,11 @@ class MerchantPortalMode(PortalMode):
         canvas.create_rectangle(self.width/2-400, self.height/2-250, self.width/2+400, self.height/2+250, fill='#FFFFFF')
         canvas.create_text(self.width/2-360, self.height/2-230, text="Products Sold", anchor='nw', font='Helvetica 30')
 
-        self.chart.draw(canvas)
+        try:
+            self.chart.draw(canvas)
+            self.notEnoughData = False
+        except:
+            self.notEnoughData = True
 
     def redrawAll(self, canvas, data):
 
@@ -574,3 +590,8 @@ class MerchantPortalMode(PortalMode):
             self.drawSuggestedProductsPane(canvas)
         elif self.viewingAnalytics:
             self.drawAnalyticsPane(canvas)
+
+        if self.faceError:
+            canvas.create_text(300, 600, text="Face scanning error. Try again.", anchor='nw', font='Helvetic 16', fill='red')
+        if self.notEnoughData:
+            canvas.create_text(self.width/2, self.height/2, text="Not enough data.", anchor='c', font='Helvetic 16', fill='red')

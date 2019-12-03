@@ -50,6 +50,10 @@ class CustomerPortalMode(PortalMode):
         self.viewingCategories = False
         self.counter = 0
 
+        # used to avoid errors
+        self.faceError = False
+        self.notEnoughData = False
+
     # mouse pressed event
     def mousePressed(self, event, data):  
         # if adding or removing money, then only listen for events on that pane
@@ -99,6 +103,7 @@ class CustomerPortalMode(PortalMode):
             if not (self.width/2-400<event.x<self.width/2+400 and
                     self.height/2-250<event.y<self.height/2+250):
                 self.viewingCategories = False
+                self.notEnoughData = False
 
         # listen for other button clicks in the main portal mode
         else:
@@ -233,23 +238,30 @@ class CustomerPortalMode(PortalMode):
         # opencv stores images in BGR order, so first need to convert to rgb order
         # From https://github.com/ageitgey/face_recognition/issues/441
         rgbImage = self.data.frame[:, :, ::-1]
-        myFaceEncoding = face_recognition.face_encodings(rgbImage)[0]
 
-        # convert to string to store in databse
-        encoded = base64.b64encode(myFaceEncoding)
-        encodedString = encoded.decode('utf-8')
+        # makes sure that a face is found in the image
+        try:
+            myFaceEncoding = face_recognition.face_encodings(rgbImage)[0]
+            self.faceError = False
 
-        # save to database
-        self.data.sql.updateFaceEncoding(user.id, encodedString)
+            # convert to string to store in databse
+            encoded = base64.b64encode(myFaceEncoding)
+            encodedString = encoded.decode('utf-8')
 
-        # put new image on screen
-        user.face = text
-        self.tkUserImage = opencvToTk(image)
+            # save to database
+            self.data.sql.updateFaceEncoding(user.id, encodedString)
 
-        # close window
-        self.changingFace = False
-        self.data.camera.release()
-        self.data.cameraOn = False
+            # put new image on screen
+            user.face = text
+            self.tkUserImage = opencvToTk(image)
+
+            # close window
+            self.changingFace = False
+            self.data.camera.release()
+            self.data.cameraOn = False
+        except:
+            self.faceError = True
+
 
     # turns on teh camea, and opens displays the live feed on the screen
     def onChangeFaceButtonClickEvent(self):
@@ -316,7 +328,11 @@ class CustomerPortalMode(PortalMode):
         canvas.create_rectangle(self.width/2-400, self.height/2-250, self.width/2+400, self.height/2+250, fill='#FFFFFF')
         canvas.create_text(self.width/2-360, self.height/2-230, text="Spending Categories", anchor='nw', font='Helvetica 30')
 
-        self.chart.draw(canvas)
+        try:
+            self.chart.draw(canvas)
+            self.notEnoughData = False
+        except:
+            self.notEnoughData = True
 
     def redrawAll(self, canvas, data):
 
@@ -342,3 +358,7 @@ class CustomerPortalMode(PortalMode):
         elif self.viewingCategories:
             self.drawCategoriesPane(canvas)
 
+        if self.faceError:
+            canvas.create_text(300, 600, text="Face scanning error. Try again.", anchor='nw', font='Helvetic 16', fill='red')
+        if self.notEnoughData:
+            canvas.create_text(self.width/2, self.height/2, text="Not enough data.", anchor='c', font='Helvetic 16', fill='red')

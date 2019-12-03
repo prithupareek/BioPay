@@ -86,7 +86,7 @@ class PortalMode(Mode):
         else:
             username = user.username
         if self.passwordBox.inputText != ('' or self.passwordBox.name):
-            password = self.passwordBox.inputText
+            password = sha1.hash(self.passwordBox.inputText)
         else:
             password = user.password
         if self.nameBox.inputText != ('' or self.nameBox.name):
@@ -94,7 +94,7 @@ class PortalMode(Mode):
         else:
             name = user.firstName
         
-        self.data.sql.modifyAccount(user.id, username, sha1.hash(password), name)
+        self.data.sql.modifyAccount(user.id, username, password, name)
         (user.username, user.password, user.firstName) = (username, password, name)
         self.inSettingsMode = False
         self.usernameBox.inputText = self.usernameBox.name

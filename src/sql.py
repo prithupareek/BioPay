@@ -203,7 +203,7 @@ class SQLConnection(object):
         with self.connection.cursor() as cursor:
 
             sql = f"INSERT INTO `{inventoryTableName}`(`item_name`, `item_price`, `item_qty`, `item_cost`, `item_category`) VALUES (%s, %s, %s, %s, %s)"
-            cursor.execute(sql, (itemName, itemPrice, itemCategory, itemCost, itemCategory))
+            cursor.execute(sql, (itemName, itemPrice, itemQty, itemCost, itemCategory))
             result = cursor.fetchall()
 
         self.connection.commit()
@@ -213,7 +213,7 @@ class SQLConnection(object):
     def updateItemQty(self, inventoryTableName, itemName, itemPrice, itemQtyIncrease):
         with self.connection.cursor() as cursor:
 
-            sql = f"UPDATE `{inventoryTableName}` SET `item_qty` = (SELECT `item_qty` WHERE `item_name`=%S AND `item_price`=%S) + %S WHERE `item_name`=%S AND `item_price`=%S;"
+            sql = f"UPDATE `{inventoryTableName}` SET `item_qty` = (SELECT `item_qty` WHERE `item_name`=%s AND `item_price`=%s) + %s WHERE `item_name`=%s AND `item_price`=%s;"
             cursor.execute(sql, (itemName, itemPrice, itemQtyIncrease, itemName, itemPrice))
             result = cursor.fetchall()
 
