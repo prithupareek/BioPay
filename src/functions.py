@@ -364,24 +364,38 @@ class PieChart(object):
         self. r = r
         self.data = data
         self.xy = (cx - r, cy -r, cx + r, cy+r)
-        self.colors = [COLORS[random.randint(0, len(COLORS))] for i in range(len(self.data))]
+        self.colors = [COLORS[random.randint(0, len(COLORS)-1)] for i in range(len(self.data))]
 
     def draw(self, canvas):        
         start = 0
         colorCounter = 0
+        other = 0
 
         # create the arcs
         for item in self.data:
-            extent = self.data[item]*360
 
-            canvas.create_arc(self.xy, start=start, extent=extent, fill=self.colors[colorCounter])
+            # if the item is less than two percent, then add it to the other slice, to prevent cluttering of chart
+            if self.data[item] < 0.02:
+                other += self.data[item]
+            else:
 
-            # create the text labels
-            canvas.create_text(self.cx+(self.r+75)*math.cos(float(start+extent/2)*math.pi/180), 
-                               self.cy+(self.r+75)*(-1)*math.sin(float(start+extent/2)*math.pi/180), text=item+" "+f"{self.data[item]*100}"[:5]+"%", anchor='c', font='Helvetica 16')
+                extent = self.data[item]*360
 
-            colorCounter += 1
-            start = start + extent
+                canvas.create_arc(self.xy, start=start, extent=extent, fill=self.colors[colorCounter])
 
+                # create the text labels
+                canvas.create_text(self.cx+(self.r+75)*math.cos(float(start+extent/2)*math.pi/180), 
+                                   self.cy+(self.r+75)*(-1)*math.sin(float(start+extent/2)*math.pi/180), text=item+" "+f"{self.data[item]*100}"[:5]+"%", anchor='c', font='Helvetica 16')
+
+                colorCounter += 1
+                start = start + extent
+
+        extent = other*360
+
+        canvas.create_arc(self.xy, start=start, extent=extent, fill=self.colors[colorCounter])
+
+        # create the text labels
+        canvas.create_text(self.cx+(self.r+75)*math.cos(float(start+extent/2)*math.pi/180), 
+                           self.cy+(self.r+75)*(-1)*math.sin(float(start+extent/2)*math.pi/180), text="Other "+f"{other*100}"[:5]+"%", anchor='c', font='Helvetica 16')
             
 

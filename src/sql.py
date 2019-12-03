@@ -283,6 +283,17 @@ class SQLConnection(object):
 
         return result
 
+    def merchantGetTransactionHistory(self, userid):
+        with self.connection.cursor() as cursor:
+
+            sql = f"SELECT * FROM `transaction_history` WHERE `recipient_id` = {userid}"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+
+        self.connection.commit()
+
+        return result
+
     def getPreviousCarts(self, userid):
         with self.connection.cursor() as cursor:
 

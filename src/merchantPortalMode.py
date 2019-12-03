@@ -77,6 +77,12 @@ class MerchantPortalMode(PortalMode):
         # suggested products list
         self.suggestedProducts = []
 
+        # analytics button
+        self.analyticsButton = DarkButton(self.width-350, 635,
+                                                   self.width-25,
+                                                   name='Analytics')
+        self.viewingAnalytics = False
+
     # mouse pressed eventss
     def mousePressed(self, event, data):  
         if self.modifyingMoney:
@@ -153,6 +159,14 @@ class MerchantPortalMode(PortalMode):
                                 item.qty -= 1
 
                         break
+
+        # if viewing category history
+        elif self.viewingAnalytics:
+            # close pane if clicik off of it
+            if not (self.width/2-400<event.x<self.width/2+400 and
+                    self.height/2-250<event.y<self.height/2+250):
+                self.viewingAnalytics = False
+
         else:
             self.logoutButton.mousePressed(event)
             self.settingsButton.mousePressed(event)
@@ -162,6 +176,7 @@ class MerchantPortalMode(PortalMode):
             self.addItemButton.mousePressed(event)
             self.removeItemButton.mousePressed(event)
             self.suggestedProductsButton.mousePressed(event)
+            self.analyticsButton.mousePressed(event)
 
             # table mouse pressed for scrolling
             self.inventoryTable.mousePressed(event)
@@ -241,6 +256,44 @@ class MerchantPortalMode(PortalMode):
         if self.suggestedProductsButton.clicked:
             self.suggestedProductsButton.mouseReleased(event)
             self.onSuggestedProductsButtonClickEvent()
+        if self.analyticsButton.clicked:
+            self.analyticsButton.mouseReleased(event)
+            self.onAnalyticsButtonClickEvent()
+
+    def onAnalyticsButtonClickEvent(self):
+
+        productsDict = dict()
+
+        # get transactions made by the merchant
+        transactions = self.data.sql.merchantGetTransactionHistory(user.id)
+
+        # loop through transactions
+        for transaction in transactions:
+
+            # get the cart for the transaction
+            transactionCart = self.data.sql.getCartData(f'cart_{transaction["trans_id"]}')
+
+            # loop through the cart items
+            for item in transactionCart:
+
+                itemName = item["item_name"]
+
+                if itemName in productsDict:
+                    productsDict[itemName] += (item["item_price"])*item["item_qty"] 
+                else:
+                    productsDict[itemName] = (item["item_price"])*item["item_qty"]
+        
+        # calculate percentages
+        self.percentages = {}
+
+        total = sum(productsDict.values())
+
+        for item in productsDict:
+            self.percentages[item] = productsDict[item]/total
+
+        self.chart = PieChart(self.width/2, self.height/2+15, 150, self.percentages)
+
+        self.viewingAnalytics = True
 
     # get a list of suggested products for a user based on cart, and add it to a table
     def onSuggestedProductsButtonClickEvent(self):
@@ -424,6 +477,7 @@ class MerchantPortalMode(PortalMode):
             self.addItemButton.mouseReleased(event)
             self.removeItemButton.mouseReleased(event)
             self.suggestedProductsButton.mouseReleased(event)
+            self.analyticsButton.mouseReleased(event)
 
             # row mouse released
             for row in self.inventoryTable.onScreen:
@@ -482,6 +536,13 @@ class MerchantPortalMode(PortalMode):
             self.itemQtyInput.draw(canvas)
             self.itemCategoryInput.draw(canvas)
 
+    def drawAnalyticsPane(self, canvas):
+        canvas.create_image(0,0,image=self.tkTransparent)
+        canvas.create_rectangle(self.width/2-400, self.height/2-250, self.width/2+400, self.height/2+250, fill='#FFFFFF')
+        canvas.create_text(self.width/2-360, self.height/2-230, text="Products Sold", anchor='nw', font='Helvetica 30')
+
+        self.chart.draw(canvas)
+
     def redrawAll(self, canvas, data):
 
         # draw the table
@@ -496,6 +557,7 @@ class MerchantPortalMode(PortalMode):
         self.addItemButton.draw(canvas)
         self.removeItemButton.draw(canvas)
         self.suggestedProductsButton.draw(canvas)
+        self.analyticsButton.draw(canvas)
 
         super().redrawAll(canvas, data)
 
@@ -510,3 +572,5 @@ class MerchantPortalMode(PortalMode):
             self.drawInventoryEditPane(canvas)
         elif self.inSuggestedProductsMode:
             self.drawSuggestedProductsPane(canvas)
+        elif self.viewingAnalytics:
+            self.drawAnalyticsPane(canvas)

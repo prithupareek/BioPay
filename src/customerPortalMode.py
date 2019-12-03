@@ -160,7 +160,7 @@ class CustomerPortalMode(PortalMode):
         self.counter += 1
 
         # periodically refresh the transaction history
-        if self.counter % 20 == 0:
+        if self.counter % 150 == 0:
 
             # get the transaction made by the user
             self.transactionTable.clear()
@@ -208,7 +208,7 @@ class CustomerPortalMode(PortalMode):
         for item in categoriesDict:
             self.percentages[item] = categoriesDict[item]/total
 
-        self.chart = PieChart(self.width/2, self.height/2+25, 200, self.percentages)
+        self.chart = PieChart(self.width/2, self.height/2+15, 150, self.percentages)
 
         self.viewingCategories = True
 
@@ -309,6 +309,7 @@ class CustomerPortalMode(PortalMode):
         canvas.create_rectangle(self.width/2-400, self.height/2-250, self.width/2+400, self.height/2+250, fill='#FFFFFF')
         canvas.create_text(self.width/2-360, self.height/2-230, text="Transaction History", anchor='nw', font='Helvetica 30')
 
+        self.currentCartTable.draw(canvas)
 
     def drawCategoriesPane(self, canvas):
         canvas.create_image(0,0,image=self.tkTransparent)
