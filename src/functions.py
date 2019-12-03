@@ -365,8 +365,6 @@ class PieChart(object):
         self.data = data
         self.xy = (cx - r, cy -r, cx + r, cy+r)
         self.colors = [COLORS[random.randint(0, len(COLORS))] for i in range(len(self.data))]
-        print(self.data)
-
 
     def draw(self, canvas):        
         start = 0
