@@ -14,8 +14,8 @@ class SQLConnection(object):
         with self.connection.cursor() as cursor:
 
             # get the record based on username and password
-            sql = f"SELECT * FROM `user_info` WHERE `user_name`='{username}' AND `user_password`='{password}'"
-            cursor.execute(sql)
+            sql = f"SELECT * FROM `user_info` WHERE `user_name`=%s AND `user_password`=%s"
+            cursor.execute(sql, (username, password))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -26,8 +26,8 @@ class SQLConnection(object):
         with self.connection.cursor() as cursor:
 
             # Create a new record
-            sql = f"INSERT INTO `user_info`(`user_name`, `user_password`, `user_firstName`, `user_typ`) VALUES ('{username}','{password}','{name}','{acctType}')"
-            cursor.execute(sql)
+            sql = f"INSERT INTO `user_info`(`user_name`, `user_password`, `user_firstName`, `user_typ`) VALUES (%s,%s,%s,%s)"
+            cursor.execute(sql, (username, password, name, acctType))
 
             sql = "SELECT * FROM `user_info` ORDER BY `user_id` DESC LIMIT 1"
             cursor.execute(sql)
@@ -40,8 +40,8 @@ class SQLConnection(object):
     def findUserByUsername(self, username):
         with self.connection.cursor() as cursor:
 
-            sql = f"SELECT * FROM `user_info` WHERE `user_name`='{username}'"
-            cursor.execute(sql)
+            sql = f"SELECT * FROM `user_info` WHERE `user_name`=%s"
+            cursor.execute(sql, (username,))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -51,8 +51,8 @@ class SQLConnection(object):
     def getUserNameById(self, userid):
         with self.connection.cursor() as cursor:
 
-            sql = f"SELECT `user_firstName` FROM `user_info` WHERE `user_id`='{userid}'"
-            cursor.execute(sql)
+            sql = f"SELECT `user_firstName` FROM `user_info` WHERE `user_id`=%s"
+            cursor.execute(sql, (userid,))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -62,8 +62,8 @@ class SQLConnection(object):
     def updateAccountBalance(self, userid):
         with self.connection.cursor() as cursor:
 
-            sql = f'SELECT `user_balance` FROM `user_info` WHERE `user_id` = {userid}'
-            cursor.execute(sql)
+            sql = f'SELECT `user_balance` FROM `user_info` WHERE `user_id` = %s'
+            cursor.execute(sql, (userid,))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -73,8 +73,8 @@ class SQLConnection(object):
     def modifyAccountBalance(self, userid, amount):
         with self.connection.cursor() as cursor:
 
-            sql = f"UPDATE `user_info` SET `user_balance` = '{amount}' WHERE `user_info`.`user_id` = {userid};"
-            cursor.execute(sql)
+            sql = f"UPDATE `user_info` SET `user_balance` = %s WHERE `user_info`.`user_id` = %s;"
+            cursor.execute(sql, (amount, userid))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -84,8 +84,8 @@ class SQLConnection(object):
     def modifyAccount(self, userid, username, password, firstName):
         with self.connection.cursor() as cursor:
 
-            sql = f"UPDATE `user_info` SET `user_name` = '{username}', `user_password` = '{password}', `user_firstName` = '{firstName}' WHERE `user_info`.`user_id` = {userid}"
-            cursor.execute(sql)
+            sql = f"UPDATE `user_info` SET `user_name` = %s, `user_password` = %s, `user_firstName` = %s WHERE `user_info`.`user_id` = %s"
+            cursor.execute(sql, (username, password, firstName, userid))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -95,8 +95,8 @@ class SQLConnection(object):
     def getImage(self, userid):
         with self.connection.cursor() as cursor:
 
-            sql = f'SELECT `user_face` FROM `user_info` WHERE `user_id` = {userid};'
-            cursor.execute(sql)
+            sql = f'SELECT `user_face` FROM `user_info` WHERE `user_id` = %s;'
+            cursor.execute(sql, (userid,))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -106,8 +106,8 @@ class SQLConnection(object):
     def updateFaceImage(self, userid, image):
         with self.connection.cursor() as cursor:
 
-            sql = f'UPDATE `user_info` SET `user_face` = "{image}" WHERE `user_info`.`user_id` = {userid}'
-            cursor.execute(sql)
+            sql = f'UPDATE `user_info` SET `user_face` = %s WHERE `user_info`.`user_id` = %s'
+            cursor.execute(sql, (image, userid))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -117,8 +117,8 @@ class SQLConnection(object):
     def updateFaceEncoding(self, userid, encoding):
         with self.connection.cursor() as cursor:
 
-            sql = f"""UPDATE `user_info` SET `user_face_encoding` = '{encoding}' WHERE `user_info`.`user_id` = {userid};"""
-            cursor.execute(sql)
+            sql = f"""UPDATE `user_info` SET `user_face_encoding` = %s WHERE `user_info`.`user_id` = %s;"""
+            cursor.execute(sql, (encoding, userid))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -129,13 +129,13 @@ class SQLConnection(object):
         with self.connection.cursor() as cursor:
 
             sql = f"""
-                    CREATE TABLE M_{userid}_Inventory(
+                    CREATE TABLE M_%s_Inventory(
                         item_id INT(100) AUTO_INCREMENT PRIMARY KEY,
                         item_name VARCHAR(100),
                         item_price DECIMAL(10, 2)
                     );
                    """
-            cursor.execute(sql)
+            cursor.execute(sql, (userid,))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -145,8 +145,8 @@ class SQLConnection(object):
     def setInventoryReference(self, userid):
         with self.connection.cursor() as cursor:
 
-            sql = f'UPDATE `user_info` SET `user_inventory` = "M_{userid}_Inventory" WHERE `user_info`.`user_id` = {userid}'
-            cursor.execute(sql)
+            sql = f'UPDATE `user_info` SET `user_inventory` = "M_%s_Inventory" WHERE `user_info`.`user_id` = %s'
+            cursor.execute(sql, (userid,userid))
             result = cursor.fetchone()
 
         self.connection.commit()
@@ -189,10 +189,10 @@ class SQLConnection(object):
     def transferMoney(self, senderId, recpId, amount):
         with self.connection.cursor() as cursor:
 
-            sub = f"UPDATE `user_info` SET `user_balance` = (SELECT `user_balance` WHERE `user_id`={senderId}) - {amount} WHERE `user_id` = {senderId};"
-            cursor.execute(sub)
-            add = f"UPDATE `user_info` SET `user_balance` = (SELECT `user_balance` WHERE `user_id`={recpId}) + {amount} WHERE `user_id` = {recpId};"
-            cursor.execute(add)
+            sub = f"UPDATE `user_info` SET `user_balance` = (SELECT `user_balance` WHERE `user_id`=%s) - %s WHERE `user_id` = %s;"
+            cursor.execute(sub, (senderId, amount, senderId))
+            add = f"UPDATE `user_info` SET `user_balance` = (SELECT `user_balance` WHERE `user_id`=%s) + %s WHERE `user_id` = %s;"
+            cursor.execute(add, (recpId, amount, recpId))
             result = cursor.fetchall()
 
         self.connection.commit()
@@ -202,8 +202,8 @@ class SQLConnection(object):
     def addItemToInventory(self, inventoryTableName, itemName, itemPrice, itemQty, itemCost, itemCategory):
         with self.connection.cursor() as cursor:
 
-            sql = f"INSERT INTO `{inventoryTableName}`(`item_name`, `item_price`, `item_qty`, `item_cost`, `item_category`) VALUES ('{itemName}',{itemPrice}, {itemQty}, {itemCost}, '{itemCategory}')"
-            cursor.execute(sql)
+            sql = f"INSERT INTO `{inventoryTableName}`(`item_name`, `item_price`, `item_qty`, `item_cost`, `item_category`) VALUES (%s, %s, %s, %s, %s)"
+            cursor.execute(sql, (itemName, itemPrice, itemCategory, itemCost, itemCategory))
             result = cursor.fetchall()
 
         self.connection.commit()
@@ -213,8 +213,8 @@ class SQLConnection(object):
     def updateItemQty(self, inventoryTableName, itemName, itemPrice, itemQtyIncrease):
         with self.connection.cursor() as cursor:
 
-            sql = f"UPDATE `{inventoryTableName}` SET `item_qty` = (SELECT `item_qty` WHERE `item_name`='{itemName}' AND `item_price`='{itemPrice}') + {itemQtyIncrease} WHERE `item_name`='{itemName}' AND `item_price`='{itemPrice}';"
-            cursor.execute(sql)
+            sql = f"UPDATE `{inventoryTableName}` SET `item_qty` = (SELECT `item_qty` WHERE `item_name`=%S AND `item_price`=%S) + %S WHERE `item_name`=%S AND `item_price`=%S;"
+            cursor.execute(sql, (itemName, itemPrice, itemQtyIncrease, itemName, itemPrice))
             result = cursor.fetchall()
 
         self.connection.commit()
@@ -225,8 +225,8 @@ class SQLConnection(object):
     def removeItemFromInventory(self, inventoryTableName, itemName, itemPrice):
         with self.connection.cursor() as cursor:
 
-            sql = f"DELETE FROM `{inventoryTableName}` WHERE `item_name` = '{itemName}' AND `item_price` = {itemPrice}"
-            cursor.execute(sql)
+            sql = f"DELETE FROM `{inventoryTableName}` WHERE `item_name` = %s AND `item_price` = %s"
+            cursor.execute(sql, (itemName, itemPrice))
             result = cursor.fetchall()
 
         self.connection.commit()
@@ -237,8 +237,8 @@ class SQLConnection(object):
         with self.connection.cursor() as cursor:
 
             # first create at row with the transaction info
-            addSql = f"INSERT INTO `transaction_history`(`sender_id`, `recipient_id`, `trans_amount`) VALUES ({senderId},{recpId},{amount});"
-            cursor.execute(addSql)
+            addSql = f"INSERT INTO `transaction_history`(`sender_id`, `recipient_id`, `trans_amount`) VALUES (%s, %s, %s);"
+            cursor.execute(addSql, (senderId, recpId, amount))
             getIdSql = f'SELECT @@IDENTITY AS "id";'
             cursor.execute(getIdSql)
             result = cursor.fetchall()
@@ -260,8 +260,8 @@ class SQLConnection(object):
 
                 (prodId, name, price, qty) = (item[0], item[1], item[2], item[3])
 
-                addToCartSql = f"INSERT INTO `cart_{transId}`(`item_id`, `item_name`, `item_price`, `item_qty`) VALUES ({prodId}, '{name}', {price}, {qty})"
-                cursor.execute(addToCartSql)
+                addToCartSql = f"INSERT INTO `cart_{transId}`(`item_id`, `item_name`, `item_price`, `item_qty`) VALUES (%s, %s, %s, %s)"
+                cursor.execute(addToCartSql, (prodId, name, price, qty))
 
             # add the cart tablename to the transaction history table
             addCartNameSql = f"UPDATE `transaction_history` SET `item_list`='cart_{transId}' WHERE `trans_id` = {transId};"
@@ -275,8 +275,8 @@ class SQLConnection(object):
     def getTransactionHistory(self, userid):
         with self.connection.cursor() as cursor:
 
-            sql = f"SELECT * FROM `transaction_history` WHERE `sender_id` = {userid}"
-            cursor.execute(sql)
+            sql = f"SELECT * FROM `transaction_history` WHERE `sender_id` = %s"
+            cursor.execute(sql, (userid,))
             result = cursor.fetchall()
 
         self.connection.commit()
@@ -286,8 +286,8 @@ class SQLConnection(object):
     def merchantGetTransactionHistory(self, userid):
         with self.connection.cursor() as cursor:
 
-            sql = f"SELECT * FROM `transaction_history` WHERE `recipient_id` = {userid}"
-            cursor.execute(sql)
+            sql = f"SELECT * FROM `transaction_history` WHERE `recipient_id` = %s"
+            cursor.execute(sql, (userid,))
             result = cursor.fetchall()
 
         self.connection.commit()
