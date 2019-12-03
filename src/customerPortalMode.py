@@ -38,7 +38,7 @@ class CustomerPortalMode(PortalMode):
             transId = item['trans_id']
             transPrice = item['trans_amount']
             merchName = data.sql.getUserNameById(item['recipient_id'])['user_firstName']
-            self.transactionTable.addRow(transId, merchName, transPrice, mode='noButton')
+            self.transactionTable.addRow(transId, merchName, transPrice, -1, mode='noButton')
         
     # mouse pressed event
     def mousePressed(self, event, data):  

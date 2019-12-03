@@ -288,7 +288,9 @@ class TableRow(object):
         canvas.create_rectangle(self.x0, self.y0, self.x1, self.y1, outline=GRAY_COLOR, width=1, fill='#FFFFFF')
         canvas.create_text(self.x0+25, (self.y1-self.y0)/2+self.y0, text=self.name, font='Helvetica 24', fill='#000000', anchor='w')
         canvas.create_text((self.x1-self.x0)//3 + self.x0 +25, (self.y1-self.y0)/2+self.y0, text="$"+str(self.price), font='Helvetica 24', fill='#000000', anchor='w')
-        canvas.create_text(2*(self.x1-self.x0)//3 + self.x0, (self.y1-self.y0)/2+self.y0, text="Qty:"+str(self.qty), font='Helvetica 24', fill='#000000', anchor='w')
+
+        if not self.qty == -1:
+            canvas.create_text(2*(self.x1-self.x0)//3 + self.x0, (self.y1-self.y0)/2+self.y0, text="Qty:"+str(self.qty), font='Helvetica 24', fill='#000000', anchor='w')
         if self.mode != 'noButton':
             self.button.draw(canvas)
 

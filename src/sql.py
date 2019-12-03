@@ -190,10 +190,10 @@ class SQLConnection(object):
 
         return result
 
-    def addItemToInventory(self, inventoryTableName, itemName, itemPrice, itemQty, itemCost):
+    def addItemToInventory(self, inventoryTableName, itemName, itemPrice, itemQty, itemCost, itemCategory):
         with self.connection.cursor() as cursor:
 
-            sql = f"INSERT INTO `{inventoryTableName}`(`item_name`, `item_price`, `item_qty`, `item_cost`) VALUES ('{itemName}',{itemPrice}, {itemQty}, {itemCost})"
+            sql = f"INSERT INTO `{inventoryTableName}`(`item_name`, `item_price`, `item_qty`, `item_cost`, `item_category`) VALUES ('{itemName}',{itemPrice}, {itemQty}, {itemCost}, '{itemCategory}')"
             cursor.execute(sql)
             result = cursor.fetchall()
 

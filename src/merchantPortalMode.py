@@ -60,7 +60,10 @@ class MerchantPortalMode(PortalMode):
         self.itemQtyInput = InputBox(self.width/2-160, self.height/2+40,
                                     self.width/2+160,
                                     name='Qty')
-        self.itemSubmitButton = DarkButton(self.width/2-160, self.height/2+100,
+        self.itemCategoryInput = InputBox(self.width/2-160, self.height/2+100,
+                                    self.width/2+160,
+                                    name='Category')
+        self.itemSubmitButton = DarkButton(self.width/2-160, self.height/2+160,
                                   self.width/2+160,
                                   name='Submit')
 
@@ -112,6 +115,7 @@ class MerchantPortalMode(PortalMode):
             self.itemNameInput.mousePressed(event)
             self.itemPriceInput.mousePressed(event)
             self.itemQtyInput.mousePressed(event)
+            self.itemCategoryInput.mousePressed(event)
 
             # close pane if click off of it
             if not (self.width/2-200<event.x<self.width/2+200 and
@@ -300,12 +304,13 @@ class MerchantPortalMode(PortalMode):
 
             itemQty = self.itemQtyInput.inputText
             itemCost = Decimal(itemPrice)/4
+            itemCategory = self.itemCategoryInput.inputText
 
             # if item already in inventory
             if (itemName, Decimal(itemPrice)) in [(row.name, row.price) for row in self.inventoryTable.rows]:
                 self.data.sql.updateItemQty(user.inventoryTableName, itemName, itemPrice, itemQty)
             else:
-                self.data.sql.addItemToInventory(user.inventoryTableName, itemName, itemPrice, itemQty, itemCost)
+                self.data.sql.addItemToInventory(user.inventoryTableName, itemName, itemPrice, itemQty, itemCost, itemCategory)
 
             # charge the merchant for the items
             user.balance -= int(itemQty)*itemCost
@@ -327,6 +332,7 @@ class MerchantPortalMode(PortalMode):
         self.itemNameInput.inputText = self.itemNameInput.name
         self.itemPriceInput.inputText = self.itemPriceInput.name
         self.itemQtyInput.inputText = self.itemQtyInput.name
+        self.itemCategoryInput.inputText = self.itemCategoryInput.name
     
     def onInventoryModifyButtonClickEvent(self, mode):
         self.editingInventory = True
@@ -431,6 +437,7 @@ class MerchantPortalMode(PortalMode):
             self.itemNameInput.keyPressed(event)
             self.itemPriceInput.keyPressed(event)
             self.itemQtyInput.keyPressed(event)
+            self.itemCategoryInput.keyPressed(event)
 
     def drawSuggestedProductsPane(self, canvas):
         canvas.create_image(0,0,image=self.tkTransparent)
@@ -461,14 +468,16 @@ class MerchantPortalMode(PortalMode):
 
     def drawInventoryEditPane(self, canvas):
         canvas.create_image(0,0,image=self.tkTransparent)
-        canvas.create_rectangle(self.width/2-200, self.height/2-160, self.width/2+200, self.height/2+160, fill='#FFFFFF')
+        canvas.create_rectangle(self.width/2-200, self.height/2-160, self.width/2+200, self.height/2+220, fill='#FFFFFF')
         canvas.create_text(self.width/2-160, self.height/2-140, text="Inventory Management", anchor='nw', font='Helvetica 30')
         self.itemSubmitButton.draw(canvas)
         self.itemNameInput.draw(canvas)
         self.itemPriceInput.draw(canvas)
+        
 
         if self.inventoryModifyMode == 1:
             self.itemQtyInput.draw(canvas)
+            self.itemCategoryInput.draw(canvas)
 
     def redrawAll(self, canvas, data):
 
