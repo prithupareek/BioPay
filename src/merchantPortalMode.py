@@ -9,14 +9,20 @@ class MerchantPortalMode(PortalMode):
 
         self.type = 'Merchant'
 
-        # get inventory data
-        self.inventory = data.sql.getInventoryData(user.inventoryTableName)
+        self. error = False
 
-        # make the inventory table
-        self.inventoryTable = Table(25, 150, 600, rows=3, name='Inventory')
-        # add the items to the table
-        for item in self.inventory:
-            self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='Add')
+        try:
+            # get inventory data
+            self.inventory = data.sql.getInventoryData(user.inventoryTableName)
+
+            # make the inventory table
+            self.inventoryTable = Table(25, 150, 600, rows=3, name='Inventory')
+            # add the items to the table
+            for item in self.inventory:
+                self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='Add')
+            self.error = False
+        except:
+            self.error = True
 
         self.cart = []
         self.cartTotal = 0
@@ -269,36 +275,42 @@ class MerchantPortalMode(PortalMode):
 
         productsDict = dict()
 
-        # get transactions made by the merchant
-        transactions = self.data.sql.merchantGetTransactionHistory(user.id)
+        try:
 
-        # loop through transactions
-        for transaction in transactions:
+            # get transactions made by the merchant
+            transactions = self.data.sql.merchantGetTransactionHistory(user.id)
 
-            # get the cart for the transaction
-            transactionCart = self.data.sql.getCartData(f'cart_{transaction["trans_id"]}')
+            # loop through transactions
+            for transaction in transactions:
 
-            # loop through the cart items
-            for item in transactionCart:
+                # get the cart for the transaction
+                transactionCart = self.data.sql.getCartData(f'cart_{transaction["trans_id"]}')
 
-                itemName = item["item_name"]
+                # loop through the cart items
+                for item in transactionCart:
 
-                if itemName in productsDict:
-                    productsDict[itemName] += (item["item_price"])*item["item_qty"] 
-                else:
-                    productsDict[itemName] = (item["item_price"])*item["item_qty"]
-        
-        # calculate percentages
-        self.percentages = {}
+                    itemName = item["item_name"]
 
-        total = sum(productsDict.values())
+                    if itemName in productsDict:
+                        productsDict[itemName] += (item["item_price"])*item["item_qty"] 
+                    else:
+                        productsDict[itemName] = (item["item_price"])*item["item_qty"]
+            
+            # calculate percentages
+            self.percentages = {}
 
-        for item in productsDict:
-            self.percentages[item] = productsDict[item]/total
+            total = sum(productsDict.values())
 
-        self.chart = PieChart(self.width/2, self.height/2+15, 150, self.percentages)
+            for item in productsDict:
+                self.percentages[item] = productsDict[item]/total
 
-        self.viewingAnalytics = True
+            self.chart = PieChart(self.width/2, self.height/2+15, 150, self.percentages)
+
+            self.viewingAnalytics = True
+            self.error = False
+
+        except:
+            self.error = True
 
     # get a list of suggested products for a user based on cart, and add it to a table
     def onSuggestedProductsButtonClickEvent(self):
@@ -355,41 +367,47 @@ class MerchantPortalMode(PortalMode):
         itemName = self.itemNameInput.inputText
         itemPrice = self.itemPriceInput.inputText
         
+        try:
 
-        # if adding item
-        if self.inventoryModifyMode == 1:
+            # if adding item
+            if self.inventoryModifyMode == 1:
 
-            itemQty = self.itemQtyInput.inputText
-            itemCost = Decimal(itemPrice)/4
-            itemCategory = self.itemCategoryInput.inputText
+                itemQty = self.itemQtyInput.inputText
+                itemCost = Decimal(itemPrice)/4
+                itemCategory = self.itemCategoryInput.inputText
 
-            # if item already in inventory
-            if (itemName, Decimal(itemPrice)) in [(row.name, row.price) for row in self.inventoryTable.rows]:
-                self.data.sql.updateItemQty(user.inventoryTableName, itemName, itemPrice, itemQty)
-            else:
-                self.data.sql.addItemToInventory(user.inventoryTableName, itemName, itemPrice, itemQty, itemCost, itemCategory)
+                # if item already in inventory
+                if (itemName, Decimal(itemPrice)) in [(row.name, row.price) for row in self.inventoryTable.rows]:
+                    self.data.sql.updateItemQty(user.inventoryTableName, itemName, itemPrice, itemQty)
+                else:
+                    self.data.sql.addItemToInventory(user.inventoryTableName, itemName, itemPrice, itemQty, itemCost, itemCategory)
 
-            # charge the merchant for the items
-            user.balance -= int(itemQty)*itemCost
-            self.data.sql.modifyAccountBalance(user.id, user.balance)
-        # removing item
-        elif self.inventoryModifyMode == -1:
-            self.data.sql.removeItemFromInventory(user.inventoryTableName, itemName, itemPrice)
+                # charge the merchant for the items
+                user.balance -= int(itemQty)*itemCost
+                self.data.sql.modifyAccountBalance(user.id, user.balance)
+            # removing item
+            elif self.inventoryModifyMode == -1:
+                self.data.sql.removeItemFromInventory(user.inventoryTableName, itemName, itemPrice)
 
-        # update user inventory
-        self.inventory = self.data.sql.getInventoryData(user.inventoryTableName)
-        # make the inventory table
-        self.inventoryTable.clear()
-        # add the items to the table
-        for item in self.inventory:
-            self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='Add')
+            # update user inventory
+            self.inventory = self.data.sql.getInventoryData(user.inventoryTableName)
+            # make the inventory table
+            self.inventoryTable.clear()
+            # add the items to the table
+            for item in self.inventory:
+                self.inventoryTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='Add')
 
-        # close window pane
-        self.editingInventory = False
-        self.itemNameInput.inputText = self.itemNameInput.name
-        self.itemPriceInput.inputText = self.itemPriceInput.name
-        self.itemQtyInput.inputText = self.itemQtyInput.name
-        self.itemCategoryInput.inputText = self.itemCategoryInput.name
+            # close window pane
+            self.editingInventory = False
+            self.itemNameInput.inputText = self.itemNameInput.name
+            self.itemPriceInput.inputText = self.itemPriceInput.name
+            self.itemQtyInput.inputText = self.itemQtyInput.name
+            self.itemCategoryInput.inputText = self.itemCategoryInput.name
+
+            self.error = False
+
+        except:
+            self.error = True
     
     def onInventoryModifyButtonClickEvent(self, mode):
         self.editingInventory = True
@@ -595,3 +613,5 @@ class MerchantPortalMode(PortalMode):
             canvas.create_text(300, 600, text="Face scanning error. Try again.", anchor='nw', font='Helvetic 16', fill='red')
         if self.notEnoughData:
             canvas.create_text(self.width/2, self.height/2, text="Not enough data.", anchor='c', font='Helvetic 16', fill='red')
+        if self.error:
+            canvas.create_text(300, 600, text="Oops. Something went wrong.", anchor='nw', font='Helvetic 16', fill='red')

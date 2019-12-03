@@ -68,14 +68,20 @@ class PortalMode(Mode):
         self.transparent = scaleImage(self.transparent, 4, antialias=True)
         self.tkTransparent = ImageTk.PhotoImage(self.transparent)
 
+        self.error = False
+
     def timerFired(self, data):
         self.updateBalanceCounter += 1
         if self.updateBalanceCounter % 15 == 0:
             self.updateBalance()
 
     def updateBalance(self):
-        currBalance = self.data.sql.updateAccountBalance(user.id)
-        user.balance = currBalance['user_balance']
+        try:
+            currBalance = self.data.sql.updateAccountBalance(user.id)
+            user.balance = currBalance['user_balance']
+            self.error = False
+        except:
+            self.error = True
 
     def onSettingsButtonClickEvent(self):
         self.inSettingsMode = True
@@ -94,19 +100,28 @@ class PortalMode(Mode):
         else:
             name = user.firstName
         
-        self.data.sql.modifyAccount(user.id, username, password, name)
-        (user.username, user.password, user.firstName) = (username, password, name)
-        self.inSettingsMode = False
-        self.usernameBox.inputText = self.usernameBox.name
-        self.passwordBox.inputText = self.passwordBox.name
-        self.nameBox.inputText = self.nameBox.name
+        try:
+            self.data.sql.modifyAccount(user.id, username, password, name)
+            (user.username, user.password, user.firstName) = (username, password, name)
+            self.inSettingsMode = False
+            self.usernameBox.inputText = self.usernameBox.name
+            self.passwordBox.inputText = self.passwordBox.name
+            self.nameBox.inputText = self.nameBox.name
+            self.error = False
+        except:
+            self.error = True
 
     def onSubmitMoneyClick(self):
         amountChange = Decimal(self.moneyInput.inputText)*self.modifyMode
         amount = user.balance + amountChange
-        self.data.sql.modifyAccountBalance(user.id, amount)
-        self.modifyingMoney = False
-        self.moneyInput.inputText='Amount'
+
+        try:
+            self.data.sql.modifyAccountBalance(user.id, amount)
+            self.modifyingMoney = False
+            self.moneyInput.inputText='Amount'
+            self.error = False
+        except:
+            self.error = True
 
     def onMoneyClickEvent(self, mode):
         self.modifyingMoney = True
@@ -180,3 +195,6 @@ class PortalMode(Mode):
             self.drawMoneyPane(canvas)
         elif self.inSettingsMode:
             self.drawSettingsPane(canvas)
+
+        if self.error:
+            canvas.create_text(300, 600, text="Oops. Something went wrong.", anchor='nw', font='Helvetic 16', fill='red')

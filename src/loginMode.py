@@ -35,6 +35,8 @@ class LoginMode(Mode):
         self.logo = scaleImage(self.logo, 0.25, antialias=True)
         self.tkLogo = ImageTk.PhotoImage(self.logo)
 
+        self.error = False
+
     def mousePressed(self, event, data):
         self.usernameBox.mousePressed(event)
         self.passwordBox.mousePressed(event)
@@ -58,36 +60,40 @@ class LoginMode(Mode):
         password='[3#1/r>(e}UI6;Q'
         db='biometric_payment_database'
 
-        # make the sql call, and save the result
-        self.data.sql = SQLConnection(host, sqlUser, password, db)
-        currUser = self.data.sql.login(self.usernameBox.inputText, sha1.hash(self.passwordBox.inputText))
-        if currUser == None:
-            self.invalidCredentials = True
-        else:
-            self.invalidCredentials = False
-            user.id = currUser['user_id']
-            user.username = currUser['user_name']
-            user.password = currUser['user_password']
-            user.firstName = currUser['user_firstName']
-            user.type = currUser['user_typ']
-            user.balance = currUser['user_balance']
-            user.face = currUser['user_face']
-            user.inventoryTableName = currUser['user_inventory']
-            user.faceEncoding = currUser['user_face_encoding']
-
-            # go the the correct portal depending on the type or user
-            if user.type == 'C':
-                self.data.customerPortalMode = CustomerPortalMode(self.data)
-                self.data.activeMode=self.data.customerPortalMode
+        try:
+            # make the sql call, and save the result
+            self.data.sql = SQLConnection(host, sqlUser, password, db)
+            currUser = self.data.sql.login(self.usernameBox.inputText, sha1.hash(self.passwordBox.inputText))
+            if currUser == None:
+                self.invalidCredentials = True
             else:
-                self.data.merchantPortalMode = MerchantPortalMode(self.data)
-                self.data.activeMode=self.data.merchantPortalMode
+                self.invalidCredentials = False
+                user.id = currUser['user_id']
+                user.username = currUser['user_name']
+                user.password = currUser['user_password']
+                user.firstName = currUser['user_firstName']
+                user.type = currUser['user_typ']
+                user.balance = currUser['user_balance']
+                user.face = currUser['user_face']
+                user.inventoryTableName = currUser['user_inventory']
+                user.faceEncoding = currUser['user_face_encoding']
 
-                # get the face encodings for all the customers
-                user.allFaceEncodings = self.data.sql.getFaceEncodings()
+                # go the the correct portal depending on the type or user
+                if user.type == 'C':
+                    self.data.customerPortalMode = CustomerPortalMode(self.data)
+                    self.data.activeMode=self.data.customerPortalMode
+                else:
+                    self.data.merchantPortalMode = MerchantPortalMode(self.data)
+                    self.data.activeMode=self.data.merchantPortalMode
 
-                # get all the previous carts
-                user.previousCarts = self.data.sql.getPreviousCarts(user.id)
+                    # get the face encodings for all the customers
+                    user.allFaceEncodings = self.data.sql.getFaceEncodings()
+
+                    # get all the previous carts
+                    user.previousCarts = self.data.sql.getPreviousCarts(user.id)
+            self.error = False
+        except:
+            self.error = True
 
     def mouseReleased(self, event, data):
         self.loginButton.mouseReleased(event)
@@ -118,6 +124,8 @@ class LoginMode(Mode):
         canvas.create_rectangle(0,self.height,self.width, self.height/2+250, fill=MAIN_COLOR)
         canvas.create_text(self.width/2, self.height/2+275, text='Created By Prithu Pareek 2019', fill='#FFFFFF')
         # canvas.create_text(self.x01+5, self.y01+50, text=self.userNameText, anchor='sw', font='Helvetica 36 bold')
+        if self.error:
+            canvas.create_text(300, 600, text="Oops. Something went wrong.", anchor='nw', font='Helvetic 16', fill='red')
 
 
 

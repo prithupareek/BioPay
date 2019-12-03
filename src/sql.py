@@ -132,7 +132,10 @@ class SQLConnection(object):
                     CREATE TABLE M_%s_Inventory(
                         item_id INT(100) AUTO_INCREMENT PRIMARY KEY,
                         item_name VARCHAR(100),
-                        item_price DECIMAL(10, 2)
+                        item_price DECIMAL(10, 2),
+                        item_cost DECIMAL(10, 2),
+                        item_qty INT(100),
+                        item_category VARCHAR(100)
                     );
                    """
             cursor.execute(sql, (userid,))

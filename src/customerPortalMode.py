@@ -11,6 +11,8 @@ class CustomerPortalMode(PortalMode):
 
         self.type = 'Customer'
 
+        self.error = False
+
         # user image to be displayed on portal
         # first needs to be converted from base64 to actual image
         if user.face != None:
@@ -33,12 +35,16 @@ class CustomerPortalMode(PortalMode):
         self.transactionTable = Table(25, 150, 600, rows=8, name='Transaction History')
         
         # get the transaction made by the user
-        self.transactions = data.sql.getTransactionHistory(user.id)
-        for item in self.transactions:
-            transId = item['trans_id']
-            transPrice = item['trans_amount']
-            merchName = data.sql.getUserNameById(item['recipient_id'])['user_firstName']
-            self.transactionTable.addRow(transId, merchName, transPrice, -1, mode='Add') #using add mode, just to get plus sign button on ui
+        try:
+            self.transactions = data.sql.getTransactionHistory(user.id)
+            for item in self.transactions:
+                transId = item['trans_id']
+                transPrice = item['trans_amount']
+                merchName = data.sql.getUserNameById(item['recipient_id'])['user_firstName']
+                self.transactionTable.addRow(transId, merchName, transPrice, -1, mode='Add') #using add mode, just to get plus sign button on ui
+                self.error = False
+        except:
+            self.error = True
 
         self.viewingCart = False
 
@@ -125,10 +131,14 @@ class CustomerPortalMode(PortalMode):
                     self.viewingCart = True
 
                     # get the correct cart
-                    self.currentCart = self.data.sql.getCartData(f'cart_{row.prodId}')
-                    self.currentCartTable = Table(self.width/2-360, self.height/2-175, self.width/2+330, rows=6, name="Cart History")
-                    for item in self.currentCart:
-                        self.currentCartTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='noButton')
+                    try:
+                        self.currentCart = self.data.sql.getCartData(f'cart_{row.prodId}')
+                        self.currentCartTable = Table(self.width/2-360, self.height/2-175, self.width/2+330, rows=6, name="Cart History")
+                        for item in self.currentCart:
+                            self.currentCartTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='noButton')
+                        self.error = False
+                    except:
+                        self.error = True
 
 
         # if a button is clicked, then call its respective function
@@ -169,53 +179,61 @@ class CustomerPortalMode(PortalMode):
 
             # get the transaction made by the user
             self.transactionTable.clear()
-            self.transactions = data.sql.getTransactionHistory(user.id)
-            for item in self.transactions:
-                transId = item['trans_id']
-                transPrice = item['trans_amount']
-                merchName = data.sql.getUserNameById(item['recipient_id'])['user_firstName']
-                self.transactionTable.addRow(transId, merchName, transPrice, -1, mode='Add') #using add mode, just to get plus sign button on ui
+            try:
+                self.transactions = data.sql.getTransactionHistory(user.id)
+                for item in self.transactions:
+                    transId = item['trans_id']
+                    transPrice = item['trans_amount']
+                    merchName = data.sql.getUserNameById(item['recipient_id'])['user_firstName']
+                    self.transactionTable.addRow(transId, merchName, transPrice, -1, mode='Add') #using add mode, just to get plus sign button on ui
+                    self.error = False
+            except:
+                self.error = True
 
 
     def onSpendingCategoriesButtonClickEvent(self):
 
         categoriesDict = dict()
 
-        # loop through transactions
-        for transaction in self.transactions:
+        try:
+            # loop through transactions
+            for transaction in self.transactions:
 
-            # get the cart for the transaction
-            transactionCart = self.data.sql.getCartData(f'cart_{transaction["trans_id"]}')
+                # get the cart for the transaction
+                transactionCart = self.data.sql.getCartData(f'cart_{transaction["trans_id"]}')
 
-            # get the merchant inventory for the transaction
-            merchantInventory = self.data.sql.getInventoryData(f'M_{transaction["recipient_id"]}_Inventory')
+                # get the merchant inventory for the transaction
+                merchantInventory = self.data.sql.getInventoryData(f'M_{transaction["recipient_id"]}_Inventory')
 
-            # loop through the cart items
-            for item in transactionCart:
+                # loop through the cart items
+                for item in transactionCart:
 
-                # loop through the merchant inventory
-                for inventoryItem in merchantInventory:
+                    # loop through the merchant inventory
+                    for inventoryItem in merchantInventory:
 
-                    if item["item_id"] == inventoryItem["item_id"]:
+                        if item["item_id"] == inventoryItem["item_id"]:
 
-                        itemCategory = inventoryItem["item_category"]
+                            itemCategory = inventoryItem["item_category"]
 
-                        if itemCategory in categoriesDict:
-                            categoriesDict[itemCategory] += item["item_price"]*item["item_qty"]
-                        else:
-                            categoriesDict[itemCategory] = item["item_price"]*item["item_qty"]
-        
-        # calculate percentages
-        self.percentages = {}
+                            if itemCategory in categoriesDict:
+                                categoriesDict[itemCategory] += item["item_price"]*item["item_qty"]
+                            else:
+                                categoriesDict[itemCategory] = item["item_price"]*item["item_qty"]
+            
+            # calculate percentages
+            self.percentages = {}
 
-        total = sum(categoriesDict.values())
+            total = sum(categoriesDict.values())
 
-        for item in categoriesDict:
-            self.percentages[item] = categoriesDict[item]/total
+            for item in categoriesDict:
+                self.percentages[item] = categoriesDict[item]/total
 
-        self.chart = PieChart(self.width/2, self.height/2+15, 150, self.percentages)
+            self.chart = PieChart(self.width/2, self.height/2+15, 150, self.percentages)
 
-        self.viewingCategories = True
+            self.viewingCategories = True
+            self.error = False
+        except:
+            self.error = True
 
 
     # takes picture and saves it to the database
@@ -231,8 +249,12 @@ class CustomerPortalMode(PortalMode):
         text = base64.b64encode(convertedImage)
         text = text.decode('utf-8')
 
-        # save to database
-        self.data.sql.updateFaceImage(user.id, text)
+        try:
+            # save to database
+            self.data.sql.updateFaceImage(user.id, text)
+            self.error = False
+        except:
+            self.error = True
 
         # update face encoding...
         # opencv stores images in BGR order, so first need to convert to rgb order
@@ -360,5 +382,7 @@ class CustomerPortalMode(PortalMode):
 
         if self.faceError:
             canvas.create_text(300, 600, text="Face scanning error. Try again.", anchor='nw', font='Helvetic 16', fill='red')
+        if self.error:
+            canvas.create_text(300, 600, text="Oops. Something went wrong.", anchor='nw', font='Helvetic 16', fill='red')
         if self.notEnoughData:
             canvas.create_text(self.width/2, self.height/2, text="Not enough data.", anchor='c', font='Helvetic 16', fill='red')

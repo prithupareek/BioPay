@@ -43,6 +43,8 @@ class CreateAccountMode(Mode):
         # set to true if the user already exits, no account can be made with the same username twice
         self.userAlreadyExists = False
 
+        self.error = False
+
     # triggered on a mouse pressed event
     def mousePressed(self, event, data):
         # mouse pressed events for the buttons/input boxes
@@ -63,42 +65,51 @@ class CreateAccountMode(Mode):
         sqlUser='root'
         password='[3#1/r>(e}UI6;Q'
         db='biometric_payment_database'
-        self.data.sql = SQLConnection(host, sqlUser, password, db)
 
-        # first check if user already exists
-        if self.data.sql.findUserByUsername(self.usernameBox.inputText) != None:
-            self.userAlreadyExists = True
-            return
+        try:
+            self.data.sql = SQLConnection(host, sqlUser, password, db)
+            self.error = False
 
-        self.userAlreadyExists = False
+            # first check if user already exists
+            if self.data.sql.findUserByUsername(self.usernameBox.inputText) != None:
+                self.userAlreadyExists = True
+                return
 
-        # make the sql call
-        currUser = self.data.sql.createAccount(self.usernameBox.inputText, sha1.hash(self.passwordBox.inputText), 
-                                               self.nameBox.inputText, self.accountTypeButton.name[0])
+            self.userAlreadyExists = False
 
-        # grab user data from return of sql call
-        user.id = currUser['user_id']
-        user.username = currUser['user_name']
-        user.password = currUser['user_password']
-        user.firstName = currUser['user_firstName']
-        user.type = currUser['user_typ']
-        user.balance = currUser['user_balance']
-        user.face = currUser['user_face']
-        user.faceEncoding = currUser['user_face_encoding']
+            try:
+                # make the sql call
+                currUser = self.data.sql.createAccount(self.usernameBox.inputText, sha1.hash(self.passwordBox.inputText), 
+                                                       self.nameBox.inputText, self.accountTypeButton.name[0])
+                self.error = False
 
-        # go to respective portal if user is customer or merchant
-        if user.type == 'C':
-            self.data.customerPortalMode = CustomerPortalMode(self.data)
-            self.data.activeMode=self.data.customerPortalMode
-        else:
-            # if merchant, then create merchant inventory table, and add reference to user_id table
-            self.data.sql.setInventoryReference(user.id)
-            user.inventoryTableName = f"M_{user.id}_Inventory"
-            self.data.sql.createMerchantInventoryTable(user.id)
+                # grab user data from return of sql call
+                user.id = currUser['user_id']
+                user.username = currUser['user_name']
+                user.password = currUser['user_password']
+                user.firstName = currUser['user_firstName']
+                user.type = currUser['user_typ']
+                user.balance = currUser['user_balance']
+                user.face = currUser['user_face']
+                user.faceEncoding = currUser['user_face_encoding']
 
-            # go to merchant portal
-            self.data.merchantPortalMode = MerchantPortalMode(self.data)
-            self.data.activeMode=self.data.merchantPortalMode
+                # go to respective portal if user is customer or merchant
+                if user.type == 'C':
+                    self.data.customerPortalMode = CustomerPortalMode(self.data)
+                    self.data.activeMode=self.data.customerPortalMode
+                else:
+                    # if merchant, then create merchant inventory table, and add reference to user_id table
+                    self.data.sql.setInventoryReference(user.id)
+                    user.inventoryTableName = f"M_{user.id}_Inventory"
+                    self.data.sql.createMerchantInventoryTable(user.id)
+
+                    # go to merchant portal
+                    self.data.merchantPortalMode = MerchantPortalMode(self.data)
+                    self.data.activeMode=self.data.merchantPortalMode
+            except:
+                self.error = True
+        except:
+            self.error = True
 
     # mouse released events
     def mouseReleased(self, event, data):
@@ -132,6 +143,9 @@ class CreateAccountMode(Mode):
         # footer
         canvas.create_rectangle(0,self.height,self.width, self.height/2+250, fill=MAIN_COLOR)
         canvas.create_text(self.width/2, self.height/2+275, text='Created By Prithu Pareek 2019', fill='#FFFFFF')
+
+        if self.error:
+            canvas.create_text(300, 600, text="Oops. Something went wrong.", anchor='nw', font='Helvetic 16', fill='red')
 
 
 
