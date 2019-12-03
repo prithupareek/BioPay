@@ -106,7 +106,6 @@ class MerchantPortalMode(PortalMode):
             if not (self.width/2-200<event.x<self.width/2+200 and
                     self.height/2-200<event.y<self.height/2+200):
                 self.checkingOut = False
-                print("Releasing camera!")
                 self.data.camera.release()
                 self.data.cameraOn = False
 
@@ -378,6 +377,11 @@ class MerchantPortalMode(PortalMode):
 
             # get the customer name to display on the screen
             self.transCust = self.data.sql.getUserNameById(transactionCustId)['user_firstName']
+
+            # update the customers inventory quantities
+            for item in self.cartTable.rows:
+                self.data.sql.updateItemQty(user.inventoryTableName, item.name, item.price, -item.qty)
+
             
             # once transaction is done, reset cart
             self.cart = []
@@ -387,7 +391,6 @@ class MerchantPortalMode(PortalMode):
 
         # close window
         self.checkingOut = False
-        print("Releasing camera!")
         self.data.camera.release()
         self.data.cameraOn = False
 

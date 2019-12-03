@@ -32,7 +32,6 @@ class SQLConnection(object):
             sql = "SELECT * FROM `user_info` ORDER BY `user_id` DESC LIMIT 1"
             cursor.execute(sql)
             result = cursor.fetchone()
-            # print(result)
 
         self.connection.commit()
 
@@ -119,7 +118,6 @@ class SQLConnection(object):
         with self.connection.cursor() as cursor:
 
             sql = f"""UPDATE `user_info` SET `user_face_encoding` = '{encoding}' WHERE `user_info`.`user_id` = {userid};"""
-            print(sql)
             cursor.execute(sql)
             result = cursor.fetchone()
 
@@ -159,6 +157,17 @@ class SQLConnection(object):
         with self.connection.cursor() as cursor:
 
             sql = f'SELECT * FROM `{tableName}`;'
+            cursor.execute(sql)
+            result = cursor.fetchall()
+
+        self.connection.commit()
+
+        return result
+
+    def getCartData(self, cartId):
+        with self.connection.cursor() as cursor:
+
+            sql = f'SELECT * FROM `{cartId}`;'
             cursor.execute(sql)
             result = cursor.fetchall()
 
@@ -240,7 +249,8 @@ class SQLConnection(object):
                     CREATE TABLE cart_{transId}(
                         item_id INT(255),
                         item_name VARCHAR(100),
-                        item_price DECIMAL(10, 2)
+                        item_price DECIMAL(10, 2),
+                        item_qty INT(255)
                     );
                    """
             cursor.execute(cartTableSql)
@@ -248,9 +258,9 @@ class SQLConnection(object):
             # add the items into the cart table
             for item in itemList:
 
-                (prodId, name, price) = (item[0], item[1], item[2])
+                (prodId, name, price, qty) = (item[0], item[1], item[2], item[3])
 
-                addToCartSql = f"INSERT INTO `cart_{transId}`(`item_id`, `item_name`, `item_price`) VALUES ({prodId}, '{name}', {price})"
+                addToCartSql = f"INSERT INTO `cart_{transId}`(`item_id`, `item_name`, `item_price`, `item_qty`) VALUES ({prodId}, '{name}', {price}, {qty})"
                 cursor.execute(addToCartSql)
 
             # add the cart tablename to the transaction history table

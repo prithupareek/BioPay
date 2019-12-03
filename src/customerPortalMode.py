@@ -38,8 +38,18 @@ class CustomerPortalMode(PortalMode):
             transId = item['trans_id']
             transPrice = item['trans_amount']
             merchName = data.sql.getUserNameById(item['recipient_id'])['user_firstName']
-            self.transactionTable.addRow(transId, merchName, transPrice, -1, mode='noButton')
+            self.transactionTable.addRow(transId, merchName, transPrice, -1, mode='Add') #using add mode, just to get plus sign button on ui
+
+        self.viewingCart = False
+
+        # category breakdown
+        self.spendingCategoriesButton = LightButton(self.width-350, 585,
+                                                    self.width-25,
+                                                    name = 'Spending Categories')
         
+        self.viewingCategories = False
+        self.counter = 0
+
     # mouse pressed event
     def mousePressed(self, event, data):  
         # if adding or removing money, then only listen for events on that pane
@@ -74,6 +84,21 @@ class CustomerPortalMode(PortalMode):
                 # turn off the camera when you close this pane
                 self.data.camera.release()
                 self.data.cameraOn = False
+        # if viewing cart history
+        elif self.viewingCart:
+            # close pane if clicik off of it
+            if not (self.width/2-400<event.x<self.width/2+400 and
+                    self.height/2-250<event.y<self.height/2+250):
+                self.viewingCart = False
+
+            self.currentCartTable.mousePressed(event)
+
+        # if viewing category history
+        elif self.viewingCategories:
+            # close pane if clicik off of it
+            if not (self.width/2-400<event.x<self.width/2+400 and
+                    self.height/2-250<event.y<self.height/2+250):
+                self.viewingCategories = False
 
         # listen for other button clicks in the main portal mode
         else:
@@ -82,8 +107,24 @@ class CustomerPortalMode(PortalMode):
             self.addMoneyButton.mousePressed(event)
             self.removeMoneyButton.mousePressed(event)
             self.changeFaceButton.mousePressed(event)
+            self.spendingCategoriesButton.mousePressed(event)
 
             self.transactionTable.mousePressed(event)
+
+            # loop through the transaction table and check if a mouse if pressed
+            for row in self.transactionTable.rows:
+                if row.button.clicked:
+                    self.transactionTable.mouseReleased(event)
+
+                    # show the expanded list of items in the cart
+                    self.viewingCart = True
+
+                    # get the correct cart
+                    self.currentCart = self.data.sql.getCartData(f'cart_{row.prodId}')
+                    self.currentCartTable = Table(self.width/2-360, self.height/2-175, self.width/2+330, rows=6, name="Cart History")
+                    for item in self.currentCart:
+                        self.currentCartTable.addRow(item["item_id"], item['item_name'], item["item_price"], item["item_qty"], mode='noButton')
+
 
         # if a button is clicked, then call its respective function
         if self.logoutButton.clicked:
@@ -109,6 +150,68 @@ class CustomerPortalMode(PortalMode):
         if self.captureImageButton.clicked:
             self.captureImageButton.mouseReleased(event)
             self.onCaptureImageButtonClickEvent()
+        if self.spendingCategoriesButton.clicked:
+            self.spendingCategoriesButton.mouseReleased(event)
+            self.onSpendingCategoriesButtonClickEvent()
+
+    def timerFired(self, data):
+        super().timerFired(data)
+
+        self.counter += 1
+
+        # periodically refresh the transaction history
+        if self.counter % 20 == 0:
+
+            # get the transaction made by the user
+            self.transactionTable.clear()
+            self.transactions = data.sql.getTransactionHistory(user.id)
+            for item in self.transactions:
+                transId = item['trans_id']
+                transPrice = item['trans_amount']
+                merchName = data.sql.getUserNameById(item['recipient_id'])['user_firstName']
+                self.transactionTable.addRow(transId, merchName, transPrice, -1, mode='Add') #using add mode, just to get plus sign button on ui
+
+
+    def onSpendingCategoriesButtonClickEvent(self):
+
+        categoriesDict = dict()
+
+        # loop through transactions
+        for transaction in self.transactions:
+
+            # get the cart for the transaction
+            transactionCart = self.data.sql.getCartData(f'cart_{transaction["trans_id"]}')
+
+            # get the merchant inventory for the transaction
+            merchantInventory = self.data.sql.getInventoryData(f'M_{transaction["recipient_id"]}_Inventory')
+
+            # loop through the cart items
+            for item in transactionCart:
+
+                # loop through the merchant inventory
+                for inventoryItem in merchantInventory:
+
+                    if item["item_id"] == inventoryItem["item_id"]:
+
+                        itemCategory = inventoryItem["item_category"]
+
+                        if itemCategory in categoriesDict:
+                            categoriesDict[itemCategory] += item["item_price"]*item["item_qty"]
+                        else:
+                            categoriesDict[itemCategory] = item["item_price"]*item["item_qty"]
+        
+        # calculate percentages
+        self.percentages = {}
+
+        total = sum(categoriesDict.values())
+
+        for item in categoriesDict:
+            self.percentages[item] = categoriesDict[item]/total
+
+        self.chart = PieChart(self.width/2, self.height/2+25, 200, self.percentages)
+
+        self.viewingCategories = True
+
 
     # takes picture and saves it to the database
     def onCaptureImageButtonClickEvent(self):
@@ -121,9 +224,7 @@ class CustomerPortalMode(PortalMode):
 
         # convert to bytearray
         text = base64.b64encode(convertedImage)
-        print(len(text))
         text = text.decode('utf-8')
-        print(len(text))
 
         # save to database
         self.data.sql.updateFaceImage(user.id, text)
@@ -147,7 +248,6 @@ class CustomerPortalMode(PortalMode):
 
         # close window
         self.changingFace = False
-        print("Releasing camera!")
         self.data.camera.release()
         self.data.cameraOn = False
 
@@ -171,12 +271,15 @@ class CustomerPortalMode(PortalMode):
             self.submitSettingButton.mouseReleased(event)
         elif self.changingFace:
             self.captureImageButton.mouseReleased(event)
+        elif self.viewingCart:
+            self.currentCartTable.mouseReleased(event)
         else:
             self.logoutButton.mouseReleased(event)
             self.settingsButton.mouseReleased(event)
             self.addMoneyButton.mouseReleased(event)
             self.removeMoneyButton.mouseReleased(event)
             self.changeFaceButton.mouseReleased(event)
+            self.spendingCategoriesButton.mouseReleased(event)
 
             self.transactionTable.mouseReleased(event)
 
@@ -201,10 +304,26 @@ class CustomerPortalMode(PortalMode):
         # draw the capture button
         self.captureImageButton.draw(canvas)
 
+    def drawCartPane(self, canvas):
+        canvas.create_image(0,0,image=self.tkTransparent)
+        canvas.create_rectangle(self.width/2-400, self.height/2-250, self.width/2+400, self.height/2+250, fill='#FFFFFF')
+        canvas.create_text(self.width/2-360, self.height/2-230, text="Transaction History", anchor='nw', font='Helvetica 30')
+
+
+    def drawCategoriesPane(self, canvas):
+        canvas.create_image(0,0,image=self.tkTransparent)
+        canvas.create_rectangle(self.width/2-400, self.height/2-250, self.width/2+400, self.height/2+250, fill='#FFFFFF')
+        canvas.create_text(self.width/2-360, self.height/2-230, text="Spending Categories", anchor='nw', font='Helvetica 30')
+
+        self.chart.draw(canvas)
+
     def redrawAll(self, canvas, data):
 
         # change face button
         self.changeFaceButton.draw(canvas)
+
+        # categoreis button
+        self.spendingCategoriesButton.draw(canvas)
 
         if user.face != None:
             # userface image
@@ -217,4 +336,8 @@ class CustomerPortalMode(PortalMode):
 
         if self.changingFace:
             self.drawFaceCapturePane(canvas)
+        elif self.viewingCart:
+            self.drawCartPane(canvas)
+        elif self.viewingCategories:
+            self.drawCategoriesPane(canvas)
 
