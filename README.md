@@ -4,6 +4,8 @@
 
 BioPay is a biometrically (facial recognition) authenticated payment and transaction platform. The intention of this platform is to replace credit card/NFC/cash transactions with ones requiring just your face to complete the purchase. There are two sides to this app. The first is for merchants who will be able to input all of their products into the app, generate a cart for their customers, and actually complete the transaction using the biometric authentication of the customer. This would essensially replace a POS (Point of Sale) system found in most stores. The other side is for consumers. Using the app they will be able to see their transaction history, add/remove payment methods/ and enroll their face which will be used for the facial recognion authentication.
 
+[![Alt text](https://img.youtube.com/vi/eMmDysXpYeM/0.jpg)](https://www.youtube.com/watch?v=eMmDysXpYeM)
+
 ## Requirements
 - Python 3.3+
 - An active internet connection
