@@ -88,3 +88,12 @@ src:
   - No price optimization or web scrapping
   - instead will create some sort of visualizer for the mercant to view profit/losses and customer to view income/spending (graph)
   - will also try to make the python program into and executable file
+
+------------------------------------
+
+TP3 Update
+
+- Feature change:
+  - Added sha1 hash function for storeing passwords on the sql database. Passwords will be stored as a hash value. SHA1 function implemented from scratch.
+  - Analytics for merchant and customer portals implemented
+  - Executable file created, only works on MacOS as of now.
