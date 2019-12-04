@@ -9,7 +9,7 @@ BioPay is a biometrically (facial recognition) authenticated payment and transac
 - macOS or Linux
 - Windows might work, but not officially supported
 
-## Instalation
+## Installation
 To install the program files you must git clone with recursive mode on, in order to fully copy the dlib library. You cannot download the zip file or normally clone the repo, the program will not work.
 ```
 git clone --recurse-submodules https://github.com/prithupareek/BioPay.git
