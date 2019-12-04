@@ -6,6 +6,7 @@ BioPay is a biometrically (facial recognition) authenticated payment and transac
 
 ## Requirements
 - Python 3.3+
+- An active internet connection
 - macOS or Linux
 - Windows might work, but not officially supported
 
