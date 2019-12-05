@@ -23,6 +23,8 @@ You must install these dependencies in order for the program to work:
 - face_recognition
 - OpenCV
 - PyMySQL
+- requests
+- Pillow
 
 ##### To install face_recognition
 First, build and install the dlib python extensions.
@@ -39,6 +41,16 @@ $ pip3 install face_recognition
 ##### To install OpenCV
 ```
 $ pip3 install opencv-python==4.1.0.25
+```
+
+##### To install Requests
+```
+$ pip3 install requests
+```
+
+##### To install Pillow
+```
+$ pip3 install pillow
 ```
 
 ##### To install PyMySQL
