@@ -61,7 +61,7 @@ $ python3 -m pip install PyMySQL
 ## Executable App
 If you would like to simply run an executable version of the program without the need to install any libaries, download the zip archive from the link below.
 
-[Download Link](https://drive.google.com/file/d/1qrrcq-4-W5-I0TNFZ7GIBBw5jMffe4Jq/view?usp=sharing)
+[Download Link](https://drive.google.com/file/d/1_SJSDOCxaCWrd2PYAv3Ql7FCHxrkRxMp/view?usp=sharing)
 
 To run the app open the file entitled main, inside the main folder.
 
